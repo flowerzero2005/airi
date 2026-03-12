@@ -14,12 +14,14 @@ import ChatArea from '../Widgets/ChatArea.vue'
 import ChatContainer from '../Widgets/ChatContainer.vue'
 
 const { isReady } = useDeferredMount()
-const { sending } = storeToRefs(useChatOrchestratorStore())
+const chatOrchestrator = useChatOrchestratorStore()
+const { sending } = storeToRefs(chatOrchestrator)
 const { messages } = storeToRefs(useChatSessionStore())
 const { streamingMessage } = storeToRefs(useChatStreamStore())
 
 const isLoading = ref(true)
 const historyMessages = computed(() => messages.value as unknown as ChatHistoryItem[])
+</script>
 </script>
 
 <template>
@@ -44,6 +46,7 @@ const historyMessages = computed(() => messages.value as unknown as ChatHistoryI
             @vue:mounted="isLoading = false"
           />
         </div>
+
         <ChatArea />
       </ChatContainer>
     </div>

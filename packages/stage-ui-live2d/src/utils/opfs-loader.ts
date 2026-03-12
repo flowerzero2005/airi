@@ -163,9 +163,12 @@ export class OPFSCache {
 
     // check if url is blob or zip, pass through if not
     if (!key || !blobUrl || (!blobUrl.startsWith('blob:') && !blobUrl.endsWith('.zip'))) {
+      console.debug('[OPFS] Passing through non-cacheable URL:', { key, blobUrl })
       context.source = blobUrl
       return next()
     }
+
+    console.debug('[OPFS] Checking cache for:', { key, blobUrl })
 
     const files = await OPFSCache.get(key, blobUrl)
 
@@ -183,12 +186,20 @@ export class OPFSCache {
 
     try {
       const res = await fetch(blobUrl)
+      if (!res.ok) {
+        throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`)
+      }
       const blob = await res.blob()
+      console.debug(`[OPFS] Fetched blob for ${key}, size: ${blob.size} bytes, type: ${blob.type}`)
       const fileName = `${key}.zip`
       context.source = [new File([blob], fileName)]
     }
     catch (e) {
-      console.error(`[OPFS] Failed to fetch blob for ${key}`, e)
+      console.error(`[OPFS] Failed to fetch blob for ${key}`, {
+        error: e,
+        blobUrl,
+        errorMessage: e instanceof Error ? e.message : String(e),
+      })
       throw e
     }
 

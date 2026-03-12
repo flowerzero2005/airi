@@ -24,6 +24,7 @@ export interface SpeechPipelineRuntime {
   openIntent: (options?: IntentOptions) => IntentHandle
   registerHost: (pipeline: ReturnType<typeof createSpeechPipeline<AudioBuffer>>) => Promise<void>
   isHost: () => boolean
+  interrupt: (reason?: string) => void
   dispose: () => Promise<void>
 }
 
@@ -249,6 +250,12 @@ export function createSpeechPipelineRuntime(): SpeechPipelineRuntime {
     return hostReady && !!hostPipeline
   }
 
+  function interrupt(reason?: string) {
+    if (hostPipeline) {
+      hostPipeline.interrupt(reason ?? 'user-speaking')
+    }
+  }
+
   async function dispose() {
     await mutex.acquire()
     try {
@@ -265,6 +272,7 @@ export function createSpeechPipelineRuntime(): SpeechPipelineRuntime {
     openIntent,
     registerHost,
     isHost,
+    interrupt,
     dispose,
   }
 }

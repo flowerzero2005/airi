@@ -134,9 +134,17 @@ export const useSpeechStore = defineStore('speech', () => {
       if (!activeSpeechProvider.value)
         return
 
+      // Skip check for speech-noop to avoid resetting valid configurations
+      if (activeSpeechProvider.value === 'speech-noop')
+        return
+
       // NOTICE: clear stale selection when the currently selected speech provider
       // is no longer configured to avoid implicit fallback behavior from persisted state.
       if (!configuredProviderIds.includes(activeSpeechProvider.value)) {
+        console.warn(
+          `[speech] Active provider "${activeSpeechProvider.value}" is not in configured list. Resetting to speech-noop.`,
+          { configuredProviderIds, activeSpeechProvider: activeSpeechProvider.value },
+        )
         activeSpeechProvider.value = 'speech-noop'
         activeSpeechModel.value = ''
         activeSpeechVoiceId.value = ''
@@ -144,7 +152,7 @@ export const useSpeechStore = defineStore('speech', () => {
       }
     },
 
-    { immediate: true },
+    { immediate: false }, // Changed to false to avoid premature reset during initialization
   )
 
   onMounted(() => {

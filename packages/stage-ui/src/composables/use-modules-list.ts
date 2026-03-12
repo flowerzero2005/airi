@@ -59,6 +59,15 @@ export function useModulesList() {
       category: 'essential',
     },
     {
+      id: 'speech-playback',
+      name: '语音播放设置',
+      description: '配置音频缓冲和智能打断检测',
+      icon: 'i-solar:soundwave-bold-duotone',
+      to: '/settings/modules/speech-playback',
+      configured: true,
+      category: 'essential',
+    },
+    {
       id: 'hearing',
       name: t('settings.pages.modules.hearing.title'),
       description: t('settings.pages.modules.hearing.description'),
@@ -82,7 +91,7 @@ export function useModulesList() {
       description: t('settings.pages.modules.memory-short-term.description'),
       icon: 'i-solar:bookmark-bold-duotone',
       to: '/settings/modules/memory-short-term',
-      configured: false,
+      configured: true,
       category: 'essential',
     },
     {
@@ -91,7 +100,7 @@ export function useModulesList() {
       description: t('settings.pages.modules.memory-long-term.description'),
       icon: 'i-solar:book-bookmark-bold-duotone',
       to: '/settings/modules/memory-long-term',
-      configured: false,
+      configured: true,
       category: 'essential',
     },
     {

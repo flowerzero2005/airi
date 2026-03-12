@@ -17,7 +17,10 @@ export const useSettingsStageModel = defineStore('settings-stage-model', () => {
   const stageViewControlsEnabled = refManualReset<boolean>(false)
 
   async function updateStageModel() {
+    console.debug('[StageModel] Updating stage model, selected:', stageModelSelected.value)
+
     if (!stageModelSelected.value) {
+      console.debug('[StageModel] No model selected, disabling renderer')
       stageModelSelectedUrl.value = undefined
       stageModelSelectedDisplayModel.value = undefined
       stageModelRenderer.value = 'disabled'
@@ -26,11 +29,14 @@ export const useSettingsStageModel = defineStore('settings-stage-model', () => {
 
     const model = await displayModelsStore.getDisplayModel(stageModelSelected.value)
     if (!model) {
+      console.warn('[StageModel] Model not found:', stageModelSelected.value)
       stageModelSelectedUrl.value = undefined
       stageModelSelectedDisplayModel.value = undefined
       stageModelRenderer.value = 'disabled'
       return
     }
+
+    console.debug('[StageModel] Model loaded:', { id: model.id, format: model.format, type: model.type })
 
     switch (model.format) {
       case DisplayModelFormat.Live2dZip:
@@ -50,9 +56,15 @@ export const useSettingsStageModel = defineStore('settings-stage-model', () => {
       }
 
       stageModelSelectedUrl.value = URL.createObjectURL(model.file)
+      console.debug('[StageModel] Created blob URL for file model:', {
+        url: stageModelSelectedUrl.value,
+        fileSize: model.file.size,
+        fileType: model.file.type,
+      })
     }
     else {
       stageModelSelectedUrl.value = model.url
+      console.debug('[StageModel] Using URL model:', stageModelSelectedUrl.value)
     }
 
     stageModelSelectedDisplayModel.value = model

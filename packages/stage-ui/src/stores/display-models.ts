@@ -31,6 +31,13 @@ const presetVrmAvatarAPreview = new URL('../assets/vrm/models/AvatarSample-A/pre
 const presetVrmAvatarBUrl = new URL('../assets/vrm/models/AvatarSample-B/AvatarSample_B.vrm', import.meta.url).href
 const presetVrmAvatarBPreview = new URL('../assets/vrm/models/AvatarSample-B/preview.png', import.meta.url).href
 
+console.debug('[DisplayModels] Preset URLs initialized:', {
+  live2dPro: presetLive2dProUrl,
+  live2dFree: presetLive2dFreeUrl,
+  vrmA: presetVrmAvatarAUrl,
+  vrmB: presetVrmAvatarBUrl,
+})
+
 export interface DisplayModelFile {
   id: string
   format: DisplayModelFormat
@@ -86,13 +93,33 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
 
   async function getDisplayModel(id: string) {
     await until(displayModelsFromIndexedDBLoading).toBe(false)
+    console.debug('[DisplayModels] Getting display model:', id)
+
     const modelFromFile = await localforage.getItem<DisplayModelFile>(id)
     if (modelFromFile) {
+      console.debug('[DisplayModels] Found model in IndexedDB:', {
+        id: modelFromFile.id,
+        name: modelFromFile.name,
+        format: modelFromFile.format,
+        fileSize: modelFromFile.file?.size,
+      })
       return modelFromFile
     }
 
     // Fallback to in-memory presets if not found in localforage
-    return displayModelsPresets.find(model => model.id === id)
+    const preset = displayModelsPresets.find(model => model.id === id)
+    if (preset) {
+      console.debug('[DisplayModels] Found preset model:', {
+        id: preset.id,
+        name: preset.name,
+        format: preset.format,
+        url: preset.url,
+      })
+    }
+    else {
+      console.warn('[DisplayModels] Model not found:', id)
+    }
+    return preset
   }
 
   const loadLive2DModelPreview = (file: File) => generateLive2DPreview(file)

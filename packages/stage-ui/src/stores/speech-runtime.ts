@@ -17,6 +17,10 @@ export const useSpeechRuntimeStore = defineStore('speech-runtime', () => {
     return runtime.isHost()
   }
 
+  function interrupt(reason?: string) {
+    return runtime.interrupt(reason)
+  }
+
   async function dispose() {
     await runtime.dispose()
   }
@@ -25,6 +29,7 @@ export const useSpeechRuntimeStore = defineStore('speech-runtime', () => {
     openIntent,
     registerHost,
     isHost,
+    interrupt,
     dispose,
   }
 })

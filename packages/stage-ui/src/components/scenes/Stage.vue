@@ -17,9 +17,6 @@ import { ThreeScene, useModelStore } from '@proj-airi/stage-ui-three'
 import { animations } from '@proj-airi/stage-ui-three/assets/vrm'
 import { createQueue } from '@proj-airi/stream-kit'
 import { useBroadcastChannel } from '@vueuse/core'
-// import { createTransformers } from '@xsai-transformers/embed'
-// import embedWorkerURL from '@xsai-transformers/embed/worker?worker&url'
-// import { embed } from '@xsai/embed'
 import { generateSpeech } from '@xsai/generate-speech'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
@@ -29,10 +26,12 @@ import { llmInferenceEndToken } from '../../constants'
 import { EMOTION_EmotionMotionName_value, EMOTION_VRMExpressionName_value, EmotionThinkMotionName } from '../../constants/emotions'
 import { useAudioContext, useSpeakingStore } from '../../stores/audio'
 import { useChatOrchestratorStore } from '../../stores/chat'
+import { useMemoryManager } from '../../stores/chat/memory-manager'
 import { useAiriCardStore } from '../../stores/modules'
 import { useSpeechStore } from '../../stores/modules/speech'
 import { useProvidersStore } from '../../stores/providers'
 import { useSettings } from '../../stores/settings'
+import { useSpeechPlaybackSettingsStore } from '../../stores/settings/speech-playback'
 import { useSpeechRuntimeStore } from '../../stores/speech-runtime'
 
 withDefaults(defineProps<{
@@ -46,7 +45,6 @@ withDefaults(defineProps<{
 const componentState = defineModel<'pending' | 'loading' | 'mounted'>('state', { default: 'pending' })
 
 const db = ref<DuckDBWasmDrizzleDatabase>()
-// const transformersProvider = createTransformers({ embedWorkerURL })
 
 const vrmViewerRef = ref<InstanceType<typeof ThreeScene>>()
 const live2dSceneRef = ref<InstanceType<typeof Live2DScene>>()
@@ -70,7 +68,7 @@ const { mouthOpenSize } = storeToRefs(useSpeakingStore())
 const { audioContext } = useAudioContext()
 const currentAudioSource = ref<AudioBufferSourceNode>()
 
-const { onBeforeMessageComposed, onBeforeSend, onTokenLiteral, onTokenSpecial, onStreamEnd, onAssistantResponseEnd } = useChatOrchestratorStore()
+const { onBeforeMessageComposed, onBeforeSend, onTokenLiteral, onTokenSpecial, onStreamEnd, onAssistantResponseEnd, onChatTurnComplete } = useChatOrchestratorStore()
 const chatHookCleanups: Array<() => void> = []
 // WORKAROUND: clear previous handlers on unmount to avoid duplicate calls when this component remounts.
 //             We keep per-hook disposers instead of wiping the global chat hooks to play nicely with
@@ -235,6 +233,10 @@ const playbackManager = createPlaybackManager<AudioBuffer>({
   ownerOverflowPolicy: 'steal-oldest',
 })
 
+// 获取语音播放设置
+const speechPlaybackSettings = useSpeechPlaybackSettingsStore()
+const { settings: playbackSettings } = storeToRefs(speechPlaybackSettings)
+
 const speechPipeline = createSpeechPipeline<AudioBuffer>({
   tts: async (request, signal) => {
     if (signal.aborted)
@@ -324,6 +326,11 @@ const speechPipeline = createSpeechPipeline<AudioBuffer>({
     }
   },
   playback: playbackManager,
+  buffering: {
+    enabled: playbackSettings.value.bufferingEnabled,
+    minSegments: playbackSettings.value.minSegments,
+    timeout: playbackSettings.value.bufferTimeout,
+  },
 })
 
 void speechRuntimeStore.registerHost(speechPipeline)
@@ -459,12 +466,58 @@ chatHookCleanups.push(onStreamEnd(async () => {
 chatHookCleanups.push(onAssistantResponseEnd(async (_message) => {
   currentChatIntent?.end()
   currentChatIntent = null
-  // const res = await embed({
-  //   ...transformersProvider.embed('Xenova/nomic-embed-text-v1'),
-  //   input: message,
-  // })
+}))
 
-  // await db.value?.execute(`INSERT INTO memory_test (vec) VALUES (${JSON.stringify(res.embedding)});`)
+// Memory system integration - single hook for memory extraction
+const memoryManager = useMemoryManager()
+console.log('[Stage] memoryManager 初始化完成:', memoryManager)
+console.log('[Stage] memoryManager.processConversationTurn:', memoryManager.processConversationTurn)
+
+chatHookCleanups.push(onChatTurnComplete(async (chat, context) => {
+  console.log('[Stage] ========== onChatTurnComplete 钩子被触发 ==========')
+  console.log('[Stage] memoryManager 实例:', memoryManager)
+  console.log('[Stage] memoryManager.processConversationTurn 类型:', typeof memoryManager.processConversationTurn)
+
+  try {
+    // Extract user message from composed message
+    const userMessage = context.composedMessage
+      .filter(msg => msg.role === 'user')
+      .map(msg => typeof msg.content === 'string' ? msg.content : '')
+      .join(' ')
+      .trim()
+
+    // Extract assistant message
+    const assistantMessage = chat.outputText
+
+    console.log('[Stage] 用户消息长度:', userMessage.length)
+    console.log('[Stage] 助手消息长度:', assistantMessage.length)
+    console.log('[Stage] 用户消息预览:', userMessage.slice(0, 50))
+    console.log('[Stage] 助手消息预览:', assistantMessage.slice(0, 50))
+
+    if (!userMessage || !assistantMessage) {
+      console.log('[Stage] 跳过记忆提取: 缺少用户或助手消息')
+      return
+    }
+
+    console.log('[Stage] 准备调用 memoryManager.processConversationTurn...')
+
+    // Process conversation turn asynchronously (don't block the UI)
+    // IMPORTANT: We intentionally don't await here to avoid blocking the chat flow
+    const promise = memoryManager.processConversationTurn(userMessage, assistantMessage)
+    console.log('[Stage] processConversationTurn 已调用，返回值:', promise)
+
+    promise
+      .then(() => {
+        console.log('[Stage] 记忆处理完成')
+      })
+      .catch((err) => {
+        console.error('[Stage] 记忆提取失败:', err)
+      })
+  }
+  catch (error) {
+    console.error('[Stage] onChatTurnComplete 钩子错误:', error)
+  }
+  console.log('[Stage] ========== onChatTurnComplete 钩子执行完毕 ==========')
 }))
 
 onUnmounted(() => {

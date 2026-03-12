@@ -25,7 +25,7 @@ async function processContent() {
     processedContent.value = DOMPurify.sanitize(await process(props.content))
   }
   catch (error) {
-    console.warn('Failed to process markdown with syntax highlighting, using fallback:', error)
+    console.warn('[MarkdownRenderer] Failed to process markdown with syntax highlighting, using fallback:', error)
     processedContent.value = DOMPurify.sanitize(processSync(props.content))
   }
 }

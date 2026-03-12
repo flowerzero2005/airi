@@ -240,7 +240,7 @@ export const useChatSessionStore = defineStore('chat-session', () => {
   }
 
   function persistSessionMessages(sessionId: string) {
-    void persistSession(sessionId)
+    return persistSession(sessionId)
   }
 
   function setSessionMessages(sessionId: string, next: ChatHistoryItem[]) {

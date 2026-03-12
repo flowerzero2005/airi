@@ -97,7 +97,19 @@ watch(() => props.maxFps, (limit) => {
     pixiApp.value.ticker.maxFPS = resolveMaxFps(limit)
 })
 
-onMounted(async () => containerRef.value && await initLive2DPixiStage(containerRef.value))
+onMounted(async () => {
+  if (containerRef.value) {
+    try {
+      await initLive2DPixiStage(containerRef.value)
+    }
+    catch (error) {
+      console.error('[Live2D] Failed to initialize Pixi stage:', error)
+      // 确保状态被重置
+      isPixiCanvasReady.value = false
+      componentState.value = 'mounted'
+    }
+  }
+})
 onUnmounted(() => pixiApp.value?.destroy())
 
 async function captureFrame() {

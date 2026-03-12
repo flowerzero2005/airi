@@ -15,6 +15,7 @@ import { useThreeSceneIsTransparentAtPoint } from '@proj-airi/stage-ui-three'
 import { WidgetStage } from '@proj-airi/stage-ui/components/scenes'
 import { useAudioRecorder } from '@proj-airi/stage-ui/composables/audio/audio-recorder'
 import { useCanvasPixelIsTransparentAtPoint } from '@proj-airi/stage-ui/composables/canvas-alpha'
+import { useUserSpeakingState } from '@proj-airi/stage-ui/composables/use-user-speaking-state'
 import { useVAD } from '@proj-airi/stage-ui/stores/ai/models/vad'
 import { useChatOrchestratorStore } from '@proj-airi/stage-ui/stores/chat'
 import { useLive2d } from '@proj-airi/stage-ui/stores/live2d'
@@ -22,6 +23,7 @@ import { useConsciousnessStore } from '@proj-airi/stage-ui/stores/modules/consci
 import { useHearingSpeechInputPipeline } from '@proj-airi/stage-ui/stores/modules/hearing'
 import { useProvidersStore } from '@proj-airi/stage-ui/stores/providers'
 import { useSettings, useSettingsAudioDevice } from '@proj-airi/stage-ui/stores/settings'
+import { useSpeechRuntimeStore } from '@proj-airi/stage-ui/stores/speech-runtime'
 import { refDebounced, useBroadcastChannel } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onUnmounted, ref, toRef, watch } from 'vue'
@@ -140,6 +142,20 @@ const { activeProvider: activeChatProvider, activeModel: activeChatModel } = sto
 const chatStore = useChatOrchestratorStore()
 const shouldUseStreamInput = computed(() => supportsStreamInput.value && !!stream.value)
 
+// User speaking state with continuous detection
+const { markUserSpeaking, markUserSpeechEnded, shouldInterruptPlayback } = useUserSpeakingState()
+
+// Import speech runtime store for interruption
+const speechRuntimeStore = useSpeechRuntimeStore()
+
+// Watch for continuous speech detection to interrupt playback
+watch(shouldInterruptPlayback, (shouldInterrupt) => {
+  if (shouldInterrupt) {
+    console.info('[Main Page] Continuous speech detected, interrupting playback')
+    speechRuntimeStore.interrupt('continuous-user-speech')
+  }
+})
+
 const {
   init: initVAD,
   dispose: disposeVAD,
@@ -148,9 +164,11 @@ const {
 } = useVAD(workletUrl, {
   threshold: ref(0.6),
   onSpeechStart: () => {
+    markUserSpeaking()
     void handleSpeechStart()
   },
   onSpeechEnd: () => {
+    markUserSpeechEnded()
     void handleSpeechEnd()
   },
 })

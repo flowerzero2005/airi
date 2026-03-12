@@ -11,7 +11,7 @@ import { useConsciousnessStore } from '@proj-airi/stage-ui/stores/modules/consci
 import { useProvidersStore } from '@proj-airi/stage-ui/stores/providers'
 import { BasicTextarea } from '@proj-airi/ui'
 import { storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { widgetsTools } from '../stores/tools/builtin/widgets'
@@ -32,6 +32,86 @@ const providersStore = useProvidersStore()
 const { activeModel, activeProvider } = storeToRefs(useConsciousnessStore())
 const isComposing = ref(false)
 
+// Memory system - lazy loaded to avoid blocking main functionality
+let memoryTool: any = null
+let memoryManager: any = null
+let onChatTurnComplete: any = null
+let memoryCleanup: (() => void) | null = null
+
+// Get tools array
+async function getTools() {
+  const baseTools = await widgetsTools()
+  return memoryTool ? [...baseTools, memoryTool] : baseTools
+}
+
+// Safely initialize memory system
+async function initializeMemorySystem() {
+  try {
+    console.log('[InteractiveArea] Starting memory system initialization...')
+
+    // Dynamically import memory modules
+    const { memoryTool: tool } = await import('../stores/tools/builtin/memory')
+    const { useMemoryManager } = await import('@proj-airi/stage-ui/stores/chat/memory-manager')
+    const { useCharacterNotebookStore } = await import('@proj-airi/stage-ui/stores/character/notebook')
+    const { useChatContextStore } = await import('@proj-airi/stage-ui/stores/chat/context-store')
+    const { createMemorySystemPrompt } = await import('@proj-airi/stage-ui/stores/chat/context-providers')
+
+    // Initialize notebook store first
+    const notebookStore = useCharacterNotebookStore()
+    if (!notebookStore.isLoaded) {
+      console.log('[InteractiveArea] Loading notebook store...')
+      await notebookStore.loadFromStorage()
+      console.log('[InteractiveArea] Notebook store loaded, entries:', notebookStore.entries.length)
+    }
+
+    memoryTool = tool
+    memoryManager = useMemoryManager()
+    onChatTurnComplete = chatOrchestrator.onChatTurnComplete
+
+    // Inject memory system prompt
+    const contextStore = useChatContextStore()
+    contextStore.ingestContextMessage(createMemorySystemPrompt())
+    console.log('[InteractiveArea] Memory system prompt injected')
+
+    // Register memory extraction hook
+    const hookCleanup = onChatTurnComplete(async (chat: any, context: any) => {
+      try {
+        const userMessage = context.composedMessage
+          .filter((msg: any) => msg.role === 'user')
+          .map((msg: any) => typeof msg.content === 'string' ? msg.content : '')
+          .join(' ')
+          .trim()
+
+        const assistantMessage = chat.outputText
+
+        if (userMessage && assistantMessage) {
+          await memoryManager.processConversationTurn(userMessage, assistantMessage)
+        }
+      }
+      catch (error) {
+        console.error('[InteractiveArea] Memory extraction failed:', error)
+      }
+    })
+
+    memoryCleanup = hookCleanup
+
+    // Update tools compatibility with memory tool
+    if (activeProvider.value && activeModel.value) {
+      const tools = await getTools()
+      await discoverToolsCompatibility(
+        activeModel.value,
+        await providersStore.getProviderInstance<ChatProvider>(activeProvider.value),
+        tools,
+      )
+    }
+
+    console.log('[InteractiveArea] Memory system initialization complete')
+  }
+  catch (error) {
+    console.error('[InteractiveArea] Failed to initialize memory system:', error)
+  }
+}
+
 async function handleSend() {
   if (isComposing.value) {
     return
@@ -50,12 +130,13 @@ async function handleSend() {
 
   try {
     const providerConfig = providersStore.getProviderConfig(activeProvider.value)
+    const tools = await getTools()
     await ingest(textToSend, {
       model: activeModel.value,
       chatProvider: await providersStore.getProviderInstance<ChatProvider>(activeProvider.value),
       providerConfig,
       attachments: attachmentsToSend,
-      tools: widgetsTools,
+      tools,
     })
 
     attachmentsToSend.forEach(att => URL.revokeObjectURL(att.url))
@@ -105,7 +186,8 @@ function removeAttachment(index: number) {
 
 watch([activeProvider, activeModel], async () => {
   if (activeProvider.value && activeModel.value) {
-    await discoverToolsCompatibility(activeModel.value, await providersStore.getProviderInstance<ChatProvider>(activeProvider.value), [])
+    const tools = await getTools()
+    await discoverToolsCompatibility(activeModel.value, await providersStore.getProviderInstance<ChatProvider>(activeProvider.value), tools)
   }
 }, { immediate: true })
 
@@ -113,6 +195,20 @@ onAfterMessageComposed(async () => {
   messageInput.value = ''
   attachments.value.forEach(att => URL.revokeObjectURL(att.url))
   attachments.value = []
+})
+
+// Initialize memory system after component is mounted
+onMounted(() => {
+  // Delay initialization to avoid blocking main functionality
+  setTimeout(() => {
+    initializeMemorySystem()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (memoryCleanup) {
+    memoryCleanup()
+  }
 })
 
 const historyMessages = computed(() => messages.value as unknown as ChatHistoryItem[])

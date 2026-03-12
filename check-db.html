@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check IndexedDB</title>
+</head>
+<body>
+    <h1>IndexedDB Keys</h1>
+    <div id="output"></div>
+    <script>
+        async function checkDB() {
+            const output = document.getElementById('output');
+
+            // Check airi-local database
+            const request = indexedDB.open('airi-local');
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                output.innerHTML += '<h2>Database: airi-local</h2>';
+                output.innerHTML += '<p>Object Stores: ' + Array.from(db.objectStoreNames).join(', ') + '</p>';
+
+                if (db.objectStoreNames.contains('keyvaluepairs')) {
+                    const transaction = db.transaction(['keyvaluepairs'], 'readonly');
+                    const store = transaction.objectStore('keyvaluepairs');
+                    const getAllRequest = store.getAllKeys();
+
+                    getAllRequest.onsuccess = function() {
+                        output.innerHTML += '<h3>Keys in keyvaluepairs:</h3>';
+                        output.innerHTML += '<pre>' + JSON.stringify(getAllRequest.result, null, 2) + '</pre>';
+
+                        // Get all values
+                        const getAllValuesRequest = store.getAll();
+                        getAllValuesRequest.onsuccess = function() {
+                            output.innerHTML += '<h3>Values:</h3>';
+                            getAllValuesRequest.result.forEach((item, index) => {
+                                output.innerHTML += '<h4>Key: ' + getAllRequest.result[index] + '</h4>';
+                                output.innerHTML += '<pre>' + JSON.stringify(item, null, 2) + '</pre>';
+                            });
+                        };
+                    };
+                }
+            };
+
+            request.onerror = function() {
+                output.innerHTML += '<p style="color: red;">Error opening database</p>';
+            };
+        }
+
+        checkDB();
+    </script>
+</body>
+</html>

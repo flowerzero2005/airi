@@ -1,405 +1,624 @@
+# Project AIRI - AI虚拟角色容器
+
 <picture>
-  <source
-    width="100%"
-    srcset="./docs/content/public/banner-dark-1280x640.avif"
-    media="(prefers-color-scheme: dark)"
-  />
-  <source
-    width="100%"
-    srcset="./docs/content/public/banner-light-1280x640.avif"
-    media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
-  />
+  <source width="100%" srcset="./docs/content/public/banner-dark-1280x640.avif" media="(prefers-color-scheme: dark)" />
+  <source width="100%" srcset="./docs/content/public/banner-light-1280x640.avif" media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)" />
   <img width="250" src="./docs/content/public/banner-light-1280x640.avif" />
 </picture>
 
-<h1 align="center">Project AIRI</h1>
-
-<p align="center">Re-creating Neuro-sama, a soul container of AI waifu / virtual characters to bring them into our world.</p>
+<p align="center">重新创造 Neuro-sama，一个 AI 虚拟角色的灵魂容器，将她们带入我们的世界</p>
 
 <p align="center">
-  [<a href="https://discord.gg/TgQ3Cu2F7A">Join Discord Server</a>] [<a href="https://airi.moeru.ai">Try it</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.zh-CN.md">简体中文</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.ja-JP.md">日本語</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.ru-RU.md">Русский</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.vi.md">Tiếng Việt</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.fr.md">Français</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.ko-KR.md">한국어</a>]
+  [<a href="https://discord.gg/TgQ3Cu2F7A">加入 Discord</a>]
+  [<a href="https://airi.moeru.ai">在线试用</a>]
+  [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.zh-CN.md">简体中文</a>]
 </p>
-
-<p align="center">
-  <a href="https://deepwiki.com/moeru-ai/airi"><img src="https://deepwiki.com/badge.svg"></a>
-  <a href="https://github.com/moeru-ai/airi/blob/main/LICENSE"><img src="https://img.shields.io/github/license/moeru-ai/airi.svg?style=flat&colorA=080f12&colorB=1fa669"></a>
-  <a href="https://discord.gg/TgQ3Cu2F7A"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FTgQ3Cu2F7A%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&suffix=%20members&logo=discord&logoColor=white&label=%20&color=7389D8&labelColor=6A7EC2"></a>
-  <a href="https://x.com/proj_airi"><img src="https://img.shields.io/badge/%40proj__airi-black?style=flat&logo=x&labelColor=%23101419&color=%232d2e30"></a>
-  <a href="https://t.me/+7M_ZKO3zUHFlOThh"><img src="https://img.shields.io/badge/Telegram-%235AA9E6?logo=telegram&labelColor=FFFFFF"></a>
-  <a href="./docs/wechat.md"><img src="https://img.shields.io/badge/WeChat-%2307C160?logo=wechat&logoColor=%2307C160&labelColor=FFFFFF"></a>
-  <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=9g00d%2BZS7nORzcJugNNddJ7rCghZTIR7fhXabGwch2S%2BG%2BKGIKwlN1N2nIqkh2jg&busi_data=eyJncm91cENvZGUiOiIxMDU4MTU2Njk3IiwidG9rZW4iOiJmcnkra1hWNFIxNytEcG0zcHRUdVJIaldlRDFxN0dzK080QWtvTEdOQjJkNEY2eUFta1g1clNpbkxSMS9FQWFYIiwidWluIjoiMTI2MDkwNzMzNSJ9&data=b1eJrwn3GVOUh7YIxZ7l9vHQo99HPmRxKPpMKlDCmfzx8Y57IXb2EZCMaOC9rVTd2U558qpNjwUYUWlPHxVHvg&svctype=4&tempid=h5_group_info"><img src="https://img.shields.io/badge/QQ-%2312B7F5?logo=qq&labelColor=FFFFFF"></a>
-</p>
-
-<p align="center">
-  <a href="https://www.producthunt.com/products/airi?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-airi" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=993524&theme=neutral&t=1752696535380" alt="AIRI - A&#0032;container&#0032;of&#0032;cyber&#0032;living&#0032;souls&#0044;&#0032;re&#0045;creation&#0032;of&#0032;Neuro&#0045;sama | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-  <a href="https://trendshift.io/repositories/14636" target="_blank"><img src="https://trendshift.io/api/badge/repositories/14636" alt="moeru-ai%2Fairi | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
-
-> Heavily inspired by [Neuro-sama](https://www.youtube.com/@Neurosama)
 
 > [!WARNING]
-> **Attention:** We **do not** have any officially minted cryptocurrency or token associated with this project. Please check the information and proceed with caution.
+> **注意：** 我们**没有**发行任何与本项目相关的加密货币或代币。请谨慎核实信息。
 
-> [!NOTE]
->
-> We've got a whole dedicated organization [@proj-airi](https://github.com/proj-airi) for all the sub-projects born from Project AIRI. Check it out!
->
-> RAG, memory system, embedded database, icons, Live2D utilities, and more!
+---
 
-> [!TIP]
-> We have a translation project on [Crowdin](https://crowdin.com/project/proj-airi). If you find any inaccurate translations, feel free to contribute improvements there.
-> <a href="https://crowdin.com/project/proj-airi" target="_blank" rel="nofollow"><img style="width: 140px; height: 40px;" src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark.png 1x, https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" width="140" height="40" /></a>
+## 📖 目录
 
-Have you dreamed about having a cyber living being (cyber waifu, digital pet) or digital companion that could play with and talk to you?
+- [项目简介](#项目简介)
+- [核心特性](#核心特性)
+- [快速开始](#快速开始)
+  - [环境要求](#环境要求)
+  - [安装步骤](#安装步骤)
+  - [启动应用](#启动应用)
+- [详细配置](#详细配置)
+  - [桌面版配置](#桌面版配置)
+  - [Web版配置](#web版配置)
+  - [移动版配置](#移动版配置)
+  - [集成服务配置](#集成服务配置)
+- [项目结构](#项目结构)
+- [开发指南](#开发指南)
+- [常见问题](#常见问题)
+- [贡献指南](#贡献指南)
 
-With the power of modern large language models like [ChatGPT](https://chatgpt.com) and famous [Claude](https://claude.ai), asking a virtual being to roleplay and chat with us is already easy enough for everyone. Platforms like [Character.ai (a.k.a. c.ai)](https://character.ai) and [JanitorAI](https://janitorai.com/) as well as local playgrounds like [SillyTavern](https://github.com/SillyTavern/SillyTavern) are already good-enough solutions for a chat based or visual adventure game like experience.
+---
 
-> But, what about the abilities to play games? And see what you are coding at? Chatting while playing games, watching videos, and is capable of doing many other things.
+## 项目简介
 
-Perhaps you know [Neuro-sama](https://www.youtube.com/@Neurosama) already. She is currently the best virtual streamer capable of playing games, chatting, and interacting with you and the participants. Some also call this kind of being "digital human." **Sadly, as it's not open sourced, you cannot interact with her after her live streams go offline**.
+**Project AIRI（アイリ）** 是一个开源的 AI 虚拟角色平台，灵感来自著名的 [Neuro-sama](https://www.youtube.com/@Neurosama)。与其他 AI VTuber 项目不同，AIRI 从第一天起就基于现代 Web 技术构建，包括：
 
-Therefore, this project, AIRI, offers another possibility here: **let you own your digital life, cyber living, easily, anywhere, anytime**.
+- **WebGPU** - GPU 加速计算
+- **WebAudio** - 高质量音频处理
+- **WebAssembly** - 原生性能
+- **WebSocket** - 实时通信
 
-## DevLogs We Posted & Recent Updates
+这意味着 AIRI 可以在现代浏览器、桌面应用和移动设备上运行，同时保持出色的性能。
 
-- [DevLog @ 2026.02.16](https://airi.moeru.ai/docs/en/blog/DevLog-2026.02.16/) on February 16, 2026
-- [DevLog @ 2026.01.01](https://airi.moeru.ai/docs/en/blog/DevLog-2026.01.01/) on January 1, 2026
-- [DevLog @ 2025.10.20](https://airi.moeru.ai/docs/en/blog/DevLog-2025.10.20/) on October 20, 2025
-- [DevLog @ 2025.08.05](https://airi.moeru.ai/docs/en/blog/DevLog-2025.08.05/) on August 5, 2025
-- [DevLog @ 2025.08.01](https://airi.moeru.ai/docs/en/blog/DevLog-2025.08.01/) on August 1, 2025
-- [DreamLog 0x1](https://airi.moeru.ai/docs/en/blog/dreamlog-0x1/) on June 16, 2025
-- ...more on [documentation site](https://airi.moeru.ai/docs/en/)
+### 为什么选择 AIRI？
 
-## What's So Special About This Project?
+- ✅ **跨平台** - 浏览器、桌面、移动端全支持
+- ✅ **高性能** - 桌面版支持 NVIDIA CUDA 和 Apple Metal 加速
+- ✅ **可扩展** - 插件系统，轻松集成新功能
+- ✅ **开源免费** - MIT 许可证，完全开放
 
-Unlike the other AI driven VTuber open source projects, アイリ was built with support of many Web technologies such as [WebGPU](https://www.w3.org/TR/webgpu/), [WebAudio](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API), [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), [WebAssembly](https://webassembly.org/), [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket), etc. from the first day.
+---
 
-> [!TIP]
-> Worrying about the performance drop since we are using Web related technologies?
->
-> Don't worry, while Web browser version is meant to give an insight about how much we can push and do inside browsers, and webviews, we will never fully rely on this, the desktop version of AIRI is capable of using native [NVIDIA CUDA](https://developer.nvidia.com/cuda-toolkit) and [Apple Metal](https://developer.apple.com/metal/) by default (thanks to HuggingFace & beloved [candle](https://github.com/huggingface/candle) project), without any complex dependency managements, considering the tradeoff, it was partially powered by Web technologies for graphics, layouts, animations, and the WIP plugin systems for everyone to integrate things.
+## 核心特性
 
-This means that **アイリ is capable of running on modern browsers and devices** and even on mobile devices (already done with PWA support). This brings a lot of possibilities for us (the developers) to build and extend the power of アイリ VTuber to the next level, while still leaving the flexibilities for users to enable features that requires TCP connections or other non-Web technologies such as connecting to a Discord voice channel or playing Minecraft and Factorio with friends.
+### 🧠 智能大脑
+- ✅ 支持多种 LLM 提供商（OpenAI、Claude、Gemini、DeepSeek 等）
+- ✅ 智能记忆系统（长短期记忆）
+- ✅ 游戏能力（Minecraft、Factorio）
+- ✅ 社交平台集成（Discord、Telegram）
+- 🚧 浏览器内 WebGPU 推理（开发中）
 
-> [!NOTE]
->
-> We are still in the early stage of development where we are seeking out talented developers to join us and help us to make アイリ a reality.
->
-> It's ok if you are not familiar with Vue.js, TypeScript, and devtools required for this project, you can join us as an artist, designer, or even help us to launch our first live stream.
->
-> Even if you are a big fan of React, Svelte or even Solid, we welcome you. You can open a sub-directory to add features that you want to see in アイリ, or would like to experiment with.
->
-> Fields (and related projects) that we are looking for:
->
-> - Live2D modeller
-> - VRM modeller
-> - VRChat avatar designer
-> - Computer Vision
-> - Reinforcement Learning
-> - Speech Recognition
-> - Speech Synthesis
-> - ONNX Runtime
-> - Transformers.js
-> - vLLM
-> - WebGPU
-> - Three.js
-> - WebXR ([checkout the another project](https://github.com/moeru-ai/chat) we have under the @moeru-ai organization)
->
-> **If you are interested, why not introduce yourself here? [Would like to join part of us to build AIRI?](https://github.com/moeru-ai/airi/discussions/33)**
+### 👂 听觉系统
+- ✅ 浏览器音频输入
+- ✅ Discord 语音输入
+- ✅ 客户端语音识别（ASR）
+- ✅ 语音活动检测（VAD）
 
-## Current Progress
+### 👄 语音合成
+- ✅ ElevenLabs TTS 支持
+- ✅ 多语言支持
+- ✅ 实时语音流式播放
 
-Capable of
+### 🎭 虚拟形象
+- ✅ VRM 模型支持
+  - 自动眨眼
+  - 视线跟踪
+  - 空闲动画
+- ✅ Live2D 模型支持
+  - 自动眨眼
+  - 视线跟踪
+  - 空闲动画
 
-- [x] Brain
-  - [x] Play [Minecraft](https://www.minecraft.net)
-  - [x] Play [Factorio](https://www.factorio.com) (WIP, but [PoC and demo available](https://github.com/moeru-ai/airi-factorio))
-  - [x] Chat in [Telegram](https://telegram.org)
-  - [x] Chat in [Discord](https://discord.com)
-  - [ ] Memory
-    - [x] Pure in-browser database support (DuckDB WASM | `pglite`)
-    - [ ] Memory Alaya (WIP)
-  - [ ] Pure in-browser local (WebGPU) inference
-- [x] Ears
-  - [x] Audio input from browser
-  - [x] Audio input from [Discord](https://discord.com)
-  - [x] Client side speech recognition
-  - [x] Client side talking detection
-- [x] Mouth
-  - [x] [ElevenLabs](https://elevenlabs.io/) voice synthesis
-- [x] Body
-  - [x] VRM support
-    - [x] Control VRM model
-  - [x] VRM model animations
-    - [x] Auto blink
-    - [x] Auto look at
-    - [x] Idle eye movement
-  - [x] Live2D support
-    - [x] Control Live2D model
-  - [x] Live2D model animations
-    - [x] Auto blink
-    - [x] Auto look at
-    - [x] Idle eye movement
+---
 
-## Development
+## 快速开始
 
-> For detailed instructions to develop this project, follow [CONTRIBUTING.md](./.github/CONTRIBUTING.md)
+### 环境要求
 
-> [!NOTE]
-> By default, `pnpm dev` will start the development server for the Stage Web (browser version). If you would
-> like to try developing the desktop version, please make sure you read [CONTRIBUTING.md](./.github/CONTRIBUTING.md)
-> to setup the environment correctly.
+#### 必需软件
+- **Node.js** 23+ ([下载](https://nodejs.org/))
+- **pnpm** (通过 corepack 安装)
+- **Git** ([下载](https://git-scm.com/))
 
-```shell
-pnpm i
-pnpm dev
+#### 可选软件（桌面版开发）
+- **Rust** (桌面版需要，[安装指南](https://www.rust-lang.org/tools/install))
+- **Visual Studio** (Windows 用户，需要 C++ 构建工具)
+
+### 安装步骤
+
+#### 1. 克隆仓库
+
+```bash
+git clone https://github.com/moeru-ai/airi.git
+cd airi
 ```
 
-### Stage Web (Browser Version at [airi.moeru.ai](https://airi.moeru.ai))
+#### 2. 启用 pnpm
 
-```shell
-pnpm dev
+```bash
+corepack enable
+corepack prepare pnpm@latest --activate
 ```
 
-### Stage Tamagotchi (Desktop Version)
+#### 3. 安装依赖
 
-```shell
+```bash
+pnpm install
+```
+
+这将自动：
+- 安装所有 npm 依赖
+- 构建所有 packages
+- 设置 Git hooks
+
+#### 4. （可选）安装 Rust 依赖
+
+如果你要开发桌面版或 crates：
+
+```bash
+cargo fetch
+```
+
+### 启动应用
+
+#### 🖥️ 桌面版（Stage Tamagotchi）
+
+```bash
 pnpm dev:tamagotchi
 ```
 
-A Nix package for Tamagotchi is included. To run airi with Nix, first make sure to enable flakes, then run:
+这将启动 Electron 桌面应用，支持：
+- 原生 CUDA/Metal 加速
+- 系统托盘集成
+- 本地文件访问
 
-```shell
-nix run github:moeru-ai/airi
+#### 🌐 Web 版（Stage Web）
+
+```bash
+pnpm dev
+# 或
+pnpm dev:web
 ```
 
-### Stage Pocket (Mobile Version)
+访问 `http://localhost:5173` 查看应用。
 
-Start the development server for the capacitor web version:
+#### 📱 移动版（Stage Pocket）
 
-```shell
+```bash
 pnpm dev:pocket
 ```
 
-Check your IP address in the output of the command above:
+然后在 Xcode 或 Android Studio 中打开项目。
 
-```shell
-  ROLLDOWN-VITE v7.3.0  ready in 1073 ms
+#### 📚 文档站点
 
-  ➜  Local:   https://localhost:5273/
-  ➜  Network: https://<ip-will-be-here>:5273/
-  ➜  Vue DevTools: Open https://localhost:5273/__devtools__/ as a separate window
-  ➜  Vue DevTools: Press Option(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools
-  ➜  UnoCSS Inspector: https://localhost:5273/__unocss/
-```
-
-Open the Xcode project:
-
-```shell
-CAPACITOR_DEV_SERVER_URL=https://<your-ip-address>:5273 pnpm open:ios
-```
-
-Then Xcode will open and you can click the "Run" button to run the app on your iPhone.
-
-If you need to connect server channel on pocket in wireless mode, you need to start tamagotchi as root:
-
-```shell
-sudo pnpm dev:tamagotchi
-```
-
-Then enable secure websocket in tamagotchi `settings/system/general`.
-
-### Documentation Site
-
-```shell
+```bash
 pnpm dev:docs
 ```
 
-### Publish
+访问 `http://localhost:5173` 查看文档。
 
-Please update the version in `Cargo.toml` after running `bumpp`:
+---
 
-```shell
-npx bumpp --no-commit --no-tag
+## 详细配置
+
+### 桌面版配置
+
+桌面版（Tamagotchi）使用 Electron 构建，配置文件位于应用内的设置界面。
+
+#### 首次启动配置
+
+1. 启动应用后，点击右上角的设置图标
+2. 配置以下内容：
+
+**AI 提供商配置**
+- 选择你的 LLM 提供商（OpenAI、Claude、Gemini 等）
+- 输入 API Key
+- 选择模型（如 `gpt-4`、`claude-3-opus` 等）
+
+**语音配置**
+- TTS 提供商：ElevenLabs
+- 输入 ElevenLabs API Key
+- 选择语音 ID
+
+**角色配置**
+- 上传 VRM 或 Live2D 模型
+- 设置角色名称和人设
+
+#### 数据存储
+
+桌面版使用 DuckDB WASM 作为本地数据库，数据存储在：
+- **Windows**: `%APPDATA%/airi/`
+- **macOS**: `~/Library/Application Support/airi/`
+- **Linux**: `~/.config/airi/`
+
+### Web 版配置
+
+Web 版配置通过浏览器 LocalStorage 存储，首次访问时会引导你完成配置。
+
+#### 环境变量（开发）
+
+如果你在本地开发 Web 版，可以创建 `apps/stage-web/.env.local`：
+
+```env
+# API 配置（可选，用于开发）
+VITE_API_BASE_URL=http://localhost:3000
 ```
 
-## Support of LLM API Providers (powered by [xsai](https://github.com/moeru-ai/xsai))
+### 移动版配置
 
-- [x] [AIHubMix (recommended)](https://aihubmix.com/?aff=OOiX)
-- [x] [OpenRouter](https://openrouter.ai/)
-- [x] [vLLM](https://github.com/vllm-project/vllm)
-- [x] [SGLang](https://github.com/sgl-project/sglang)
-- [x] [Ollama](https://github.com/ollama/ollama)
-- [x] [302.AI (sponsored)](https://share.302.ai/514k2v)
-- [x] [OpenAI](https://platform.openai.com/docs/guides/gpt/chat-completions-api)
-  - [ ] [Azure OpenAI API](https://learn.microsoft.com/en-us/azure/ai-services/openai/reference) (PR welcome)
-- [x] [Anthropic Claude](https://anthropic.com)
-  - [ ] [AWS Claude](https://docs.anthropic.com/en/api/claude-on-amazon-bedrock) (PR welcome)
-- [x] [DeepSeek](https://www.deepseek.com/)
-- [x] [Qwen](https://help.aliyun.com/document_detail/2400395.html)
-- [x] [Google Gemini](https://developers.generativeai.google)
-- [x] [xAI](https://x.ai/)
-- [x] [Groq](https://wow.groq.com/)
-- [x] [Mistral](https://mistral.ai/)
-- [x] [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/)
-- [x] [Together.ai](https://www.together.ai/)
-- [x] [Fireworks.ai](https://www.together.ai/)
-- [x] [Novita](https://www.novita.ai/)
-- [x] [Zhipu](https://bigmodel.cn)
-- [x] [SiliconFlow](https://cloud.siliconflow.cn/i/rKXmRobW)
-- [x] [Stepfun](https://platform.stepfun.com/)
-- [x] [Baichuan](https://platform.baichuan-ai.com)
-- [x] [Minimax](https://api.minimax.chat/)
-- [x] [Moonshot AI](https://platform.moonshot.cn/)
-- [x] [ModelScope](https://modelscope.cn/docs/model-service/API-Inference/intro)
-- [x] [Player2](https://player2.game/)
-- [x] [Tencent Cloud](https://cloud.tencent.com/document/product/1729)
-- [ ] [Sparks](https://www.xfyun.cn/doc/spark/Web.html) (PR welcome)
-- [ ] [Volcano Engine](https://www.volcengine.com/experience/ark?utm_term=202502dsinvite&ac=DSASUQY5&rc=2QXCA1VI) (PR welcome)
+移动版基于 Capacitor 构建，配置方式与 Web 版类似。
 
-## Sub-projects Born from This Project
+#### iOS 开发
 
-- [Awesome AI VTuber](https://github.com/proj-airi/awesome-ai-vtuber): A curated list of AI VTubers and related projects
-- [`unspeech`](https://github.com/moeru-ai/unspeech): Universal endpoint proxy server for `/audio/transcriptions` and `/audio/speech`, like LiteLLM but for any ASR and TTS
-- [`hfup`](https://github.com/moeru-ai/hfup): tools to help on deploying, bundling to HuggingFace Spaces
-- [`xsai-transformers`](https://github.com/moeru-ai/xsai-transformers): Experimental [🤗 Transformers.js](https://github.com/huggingface/transformers.js) provider for [xsAI](https://github.com/moeru-ai/xsai).
-- [WebAI: Realtime Voice Chat](https://github.com/proj-airi/webai-realtime-voice-chat): Full example of implementing ChatGPT's realtime voice from scratch with VAD + STT + LLM + TTS.
-- [`@proj-airi/drizzle-duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/drizzle-duckdb-wasm/README.md): Drizzle ORM driver for DuckDB WASM
-- [`@proj-airi/duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/duckdb-wasm/README.md): Easy to use wrapper for `@duckdb/duckdb-wasm`
-- [`tauri-plugin-mcp`](https://github.com/moeru-ai/airi/blob/main/crates/tauri-plugin-mcp/README.md): A Tauri plugin for interacting with MCP servers.
-- [AIRI Factorio](https://github.com/moeru-ai/airi-factorio): Allow AIRI to play Factorio.
-- [AIRI DomeKeeper](https://github.com/proj-airi/game-playing-ai-dome-keeper): Allow AIRI to play DomeKeeper.
-- [Factorio RCON API](https://github.com/nekomeowww/factorio-rcon-api): RESTful API wrapper for Factorio headless server console
-- [`autorio`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/autorio): Factorio automation library
-- [`tstl-plugin-reload-factorio-mod`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/tstl-plugin-reload-factorio-mod): Reload Factorio mod when developing
-- [Velin](https://github.com/luoling8192/velin): Use Vue SFC and Markdown to write easy to manage stateful prompts for LLM
-- [`demodel`](https://github.com/moeru-ai/demodel): Easily boost the speed of pulling your models and datasets from various of inference runtimes.
-- [`inventory`](https://github.com/moeru-ai/inventory): Centralized model catalog and default provider configurations backend service
-- [MCP Launcher](https://github.com/moeru-ai/mcp-launcher): Easy to use MCP builder & launcher for all possible MCP servers, just like Ollama for models!
-- [🥺 SAD](https://github.com/moeru-ai/sad): Documentation and notes for self-host and browser running LLMs.
-
-```mermaid
-%%{ init: { 'flowchart': { 'curve': 'catmullRom' } } }%%
-
-flowchart TD
-  Core("Core")
-  Unspeech("unspeech")
-  DBDriver("@proj-airi/drizzle-duckdb-wasm")
-  MemoryDriver("[WIP] Memory Alaya")
-  DB1("@proj-airi/duckdb-wasm")
-  SVRT("@proj-airi/server-runtime")
-  Memory("Memory")
-  STT("STT")
-  Stage("Stage")
-  StageUI("@proj-airi/stage-ui")
-  UI("@proj-airi/ui")
-
-  subgraph AIRI
-    DB1 --> DBDriver --> MemoryDriver --> Memory --> Core
-    UI --> StageUI --> Stage --> Core
-    Core --> STT
-    Core --> SVRT
-  end
-
-  subgraph UI_Components
-    UI --> StageUI
-    UITransitions("@proj-airi/ui-transitions") --> StageUI
-    UILoadingScreens("@proj-airi/ui-loading-screens") --> StageUI
-    FontCJK("@proj-airi/font-cjkfonts-allseto") --> StageUI
-    FontXiaolai("@proj-airi/font-xiaolai") --> StageUI
-  end
-
-  subgraph Apps
-    Stage --> StageWeb("@proj-airi/stage-web")
-    Stage --> StageTamagotchi("@proj-airi/stage-tamagotchi")
-    Core --> RealtimeAudio("@proj-airi/realtime-audio")
-    Core --> PromptEngineering("@proj-airi/playground-prompt-engineering")
-  end
-
-  subgraph Server_Components
-    Core --> ServerSDK("@proj-airi/server-sdk")
-    ServerShared("@proj-airi/server-shared") --> SVRT
-    ServerShared --> ServerSDK
-  end
-
-  STT -->|Speaking| Unspeech
-  SVRT -->|Playing Factorio| F_AGENT
-  SVRT -->|Playing Minecraft| MC_AGENT
-
-  subgraph Factorio_Agent
-    F_AGENT("Factorio Agent")
-    F_API("Factorio RCON API")
-    factorio-server("factorio-server")
-    F_MOD1("autorio")
-
-    F_AGENT --> F_API -.-> factorio-server
-    F_MOD1 -.-> factorio-server
-  end
-
-  subgraph Minecraft_Agent
-    MC_AGENT("Minecraft Agent")
-    Mineflayer("Mineflayer")
-    minecraft-server("minecraft-server")
-
-    MC_AGENT --> Mineflayer -.-> minecraft-server
-  end
-
-  XSAI("xsAI") --> Core
-  XSAI --> F_AGENT
-  XSAI --> MC_AGENT
-
-  Core --> TauriMCP("@proj-airi/tauri-plugin-mcp")
-  Memory_PGVector("@proj-airi/memory-pgvector") --> Memory
-
-  style Core fill:#f9d4d4,stroke:#333,stroke-width:1px
-  style AIRI fill:#fcf7f7,stroke:#333,stroke-width:1px
-  style UI fill:#d4f9d4,stroke:#333,stroke-width:1px
-  style Stage fill:#d4f9d4,stroke:#333,stroke-width:1px
-  style UI_Components fill:#d4f9d4,stroke:#333,stroke-width:1px
-  style Server_Components fill:#d4e6f9,stroke:#333,stroke-width:1px
-  style Apps fill:#d4d4f9,stroke:#333,stroke-width:1px
-  style Factorio_Agent fill:#f9d4f2,stroke:#333,stroke-width:1px
-  style Minecraft_Agent fill:#f9d4f2,stroke:#333,stroke-width:1px
-
-  style DBDriver fill:#f9f9d4,stroke:#333,stroke-width:1px
-  style MemoryDriver fill:#f9f9d4,stroke:#333,stroke-width:1px
-  style DB1 fill:#f9f9d4,stroke:#333,stroke-width:1px
-  style Memory fill:#f9f9d4,stroke:#333,stroke-width:1px
-  style Memory_PGVector fill:#f9f9d4,stroke:#333,stroke-width:1px
+```bash
+# 设置开发服务器 URL
+CAPACITOR_DEV_SERVER_URL=https://<your-ip>:5273 pnpm open:ios
 ```
 
-## Similar Projects
+#### Android 开发
 
-### Open sourced ones
+```bash
+pnpm open:android
+```
 
-- [kimjammer/Neuro: A recreation of Neuro-Sama originally created in 7 days.](https://github.com/kimjammer/Neuro): very well completed implementation.
-- [SugarcaneDefender/z-waif](https://github.com/SugarcaneDefender/z-waif): Great at gaming, autonomous, and prompt engineering
-- [semperai/amica](https://github.com/semperai/amica/): Great at VRM, WebXR
-- [elizaOS/eliza](https://github.com/elizaOS/eliza): Great examples and software engineering on how to integrate agent into various of systems and APIs
-- [ardha27/AI-Waifu-Vtuber](https://github.com/ardha27/AI-Waifu-Vtuber): Great about Twitch API integrations
-- [InsanityLabs/AIVTuber](https://github.com/InsanityLabs/AIVTuber): Nice UI and UX
-- [IRedDragonICY/vixevia](https://github.com/IRedDragonICY/vixevia)
-- [t41372/Open-LLM-VTuber](https://github.com/t41372/Open-LLM-VTuber)
-- [PeterH0323/Streamer-Sales](https://github.com/PeterH0323/Streamer-Sales)
+### 集成服务配置
 
-### Non-open-sourced ones
+#### Telegram Bot
 
-- https://clips.twitch.tv/WanderingCaringDeerDxCat-Qt55xtiGDSoNmDDr https://www.youtube.com/watch?v=8Giv5mupJNE
-- https://clips.twitch.tv/TriangularAthleticBunnySoonerLater-SXpBk1dFso21VcWD
-- https://www.youtube.com/@NOWA_Mirai
+1. 进入服务目录：
+```bash
+cd services/telegram-bot
+```
 
-## Project Status
+2. 启动 PostgreSQL 数据库：
+```bash
+docker compose up -d
+```
 
-![Repobeats analytics image](https://repobeats.axiom.co/api/embed/a1d6fe2c13ea2bb53a5154435a71e2431f70c2ee.svg 'Repobeats analytics image')
+3. 配置环境变量：
+```bash
+cp .env .env.local
+```
 
-## Acknowledgements
+编辑 `.env.local`：
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+DATABASE_URL=postgresql://user:password@localhost:5432/airi
+```
 
-- [Reka UI](https://github.com/unovue/reka-ui): for designing the documentation site, the new landing page is based on this, as well as implementing a massive amount of UI components. (shadcn-vue is using Reka UI as the headless, do checkout!)
-- [pixiv/ChatVRM](https://github.com/pixiv/ChatVRM)
-- [josephrocca/ChatVRM-js: A JS conversion/adaptation of parts of the ChatVRM (TypeScript) code for standalone use in OpenCharacters and elsewhere](https://github.com/josephrocca/ChatVRM-js)
-- Design of UI and style was inspired by [Cookard](https://store.steampowered.com/app/2919650/Cookard/), [UNBEATABLE](https://store.steampowered.com/app/2240620/UNBEATABLE/), and [Sensei! I like you so much!](https://store.steampowered.com/app/2957700/_/), and artworks of [Ayame by Mercedes Bazan](https://dribbble.com/shots/22157656-Ayame) with [Wish by Mercedes Bazan](https://dribbble.com/shots/24501019-Wish)
-- [mallorbc/whisper_mic](https://github.com/mallorbc/whisper_mic)
-- [`xsai`](https://github.com/moeru-ai/xsai): Implemented a decent amount of packages to interact with LLMs and models, like [Vercel AI SDK](https://sdk.vercel.ai/) but way small.
+4. 迁移数据库：
+```bash
+pnpm -F @proj-airi/telegram-bot db:generate
+pnpm -F @proj-airi/telegram-bot db:push
+```
+
+5. 启动 Bot：
+```bash
+pnpm -F @proj-airi/telegram-bot start
+```
+
+#### Discord Bot
+
+1. 进入服务目录：
+```bash
+cd services/discord-bot
+```
+
+2. 配置环境变量：
+```bash
+cp .env .env.local
+```
+
+编辑 `.env.local`：
+```env
+DISCORD_BOT_TOKEN=your_bot_token_here
+DISCORD_CLIENT_ID=your_client_id_here
+```
+
+3. 启动 Bot：
+```bash
+pnpm -F @proj-airi/discord-bot start
+```
+
+#### Minecraft Agent
+
+1. 启动 Minecraft 服务器并开放端口
+
+2. 进入服务目录：
+```bash
+cd services/minecraft
+```
+
+3. 配置环境变量：
+```bash
+cp .env .env.local
+```
+
+编辑 `.env.local`：
+```env
+MINECRAFT_HOST=localhost
+MINECRAFT_PORT=25565
+MINECRAFT_USERNAME=AIRI
+```
+
+4. 启动 Agent：
+```bash
+pnpm -F @proj-airi/minecraft-bot start
+```
+
+---
+
+## 项目结构
+
+```
+airi/
+├── apps/                          # 应用程序
+│   ├── stage-web/                # Web 版（浏览器）
+│   ├── stage-tamagotchi/         # 桌面版（Electron）
+│   ├── stage-pocket/             # 移动版（Capacitor）
+│   ├── server/                   # 服务端应用
+│   └── component-calling/        # 组件调用示例
+│
+├── packages/                      # 共享包
+│   ├── stage-ui/                 # 核心 UI 组件和业务逻辑
+│   ├── stage-ui-three/           # Three.js 集成
+│   ├── stage-ui-live2d/          # Live2D 集成
+│   ├── stage-shared/             # Stage 共享逻辑
+│   ├── stage-pages/              # 共享页面组件
+│   ├── stage-layouts/            # 布局组件
+│   ├── ui/                       # 基础 UI 组件（基于 reka-ui）
+│   ├── i18n/                     # 国际化
+│   ├── audio/                    # 音频处理
+│   ├── pipelines-audio/          # 音频管道
+│   ├── server-runtime/           # 服务端运行时
+│   ├── server-sdk/               # 服务端 SDK
+│   ├── server-shared/            # 服务端共享代码
+│   ├── drizzle-duckdb-wasm/      # DuckDB WASM Drizzle 驱动
+│   ├── duckdb-wasm/              # DuckDB WASM 封装
+│   ├── memory-pgvector/          # PostgreSQL 向量记忆
+│   └── ...                       # 其他工具包
+│
+├── services/                      # 集成服务
+│   ├── telegram-bot/             # Telegram 机器人
+│   ├── discord-bot/              # Discord 机器人
+│   ├── minecraft/                # Minecraft Agent
+│   ├── satori-bot/               # Satori 协议机器人
+│   └── twitter-services/         # Twitter 服务
+│
+├── crates/                        # Rust crates（旧版 Tauri）
+│   ├── tauri-plugin-mcp/         # MCP 插件
+│   └── ...                       # 其他 Tauri 插件
+│
+├── plugins/                       # 插件系统
+├── docs/                          # 文档站点
+├── .github/                       # GitHub 配置
+│   └── CONTRIBUTING.md           # 贡献指南
+└── README.md                      # 本文件
+```
+
+### 核心目录说明
+
+#### `apps/`
+包含所有可运行的应用程序：
+- **stage-web**: 浏览器版本，使用 Vue 3 + Vite
+- **stage-tamagotchi**: 桌面版，使用 Electron + Vue 3
+- **stage-pocket**: 移动版，使用 Capacitor + Vue 3
+
+#### `packages/`
+共享的可复用包：
+- **stage-ui**: 核心业务组件、状态管理、组合式函数
+- **ui**: 基础 UI 组件库（按钮、输入框等）
+- **server-***: 服务端相关包，用于集成服务
+
+#### `services/`
+独立的集成服务，可以单独部署：
+- 每个服务都有自己的 `package.json` 和配置
+- 使用 `pnpm -F` 过滤器运行特定服务
+
+---
+
+## 开发指南
+
+### 开发工作流
+
+1. **创建分支**
+```bash
+git checkout -b your-username/feat/feature-name
+```
+
+2. **开发和测试**
+```bash
+# 运行类型检查
+pnpm typecheck
+
+# 运行 lint
+pnpm lint
+
+# 运行测试
+pnpm test:run
+```
+
+3. **提交代码**
+```bash
+git add .
+git commit -m "feat: add new feature"
+```
+
+使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范。
+
+4. **推送和创建 PR**
+```bash
+git push origin your-branch-name
+```
+
+### 常用命令
+
+```bash
+# 开发
+pnpm dev                    # Web 版
+pnpm dev:tamagotchi         # 桌面版
+pnpm dev:pocket             # 移动版
+pnpm dev:docs               # 文档站点
+
+# 构建
+pnpm build                  # 构建所有
+pnpm build:web              # 构建 Web 版
+pnpm build:tamagotchi       # 构建桌面版
+
+# 测试和检查
+pnpm test                   # 运行测试（watch 模式）
+pnpm test:run               # 运行测试（单次）
+pnpm typecheck              # 类型检查
+pnpm lint                   # 代码检查
+pnpm lint:fix               # 自动修复
+
+# 依赖管理
+pnpm up                     # 更新依赖
+```
+
+### 技术栈
+
+- **前端框架**: Vue 3 + TypeScript
+- **构建工具**: Vite + Rolldown
+- **状态管理**: Pinia
+- **UI 组件**: Reka UI (headless)
+- **样式**: UnoCSS
+- **测试**: Vitest
+- **Lint**: ESLint + oxlint
+- **桌面**: Electron
+- **移动**: Capacitor
+
+### 代码规范
+
+- 使用 TypeScript，避免 `any`
+- 组件使用 `<script setup>` 语法
+- 样式使用 UnoCSS，避免内联长字符串
+- 函数式编程优先，避免类（除非扩展浏览器 API）
+- 使用 `injeca` 进行依赖注入
+- 使用 `@moeru/eventa` 进行 IPC/RPC
+
+详细规范请参考 [AGENTS.md](./AGENTS.md)。
+
+---
+
+## 常见问题
+
+### 1. 安装依赖失败
+
+**问题**: `pnpm install` 报错
+
+**解决方案**:
+```bash
+# 清理缓存
+pnpm store prune
+
+# 删除 node_modules 和 lockfile
+rm -rf node_modules pnpm-lock.yaml
+
+# 重新安装
+pnpm install
+```
+
+### 2. 桌面版启动失败
+
+**问题**: `pnpm dev:tamagotchi` 报错
+
+**解决方案**:
+- 确保已安装 Rust: `rustc --version`
+- Windows 用户确保已安装 Visual Studio C++ 构建工具
+- 尝试重新构建: `pnpm -F @proj-airi/stage-tamagotchi build`
+
+### 3. 类型检查错误
+
+**问题**: `pnpm typecheck` 报错
+
+**解决方案**:
+```bash
+# 重新构建所有 packages
+pnpm build:packages
+
+# 再次运行类型检查
+pnpm typecheck
+```
+
+### 4. 数据库相关问题
+
+**问题**: 记忆系统不工作
+
+**解决方案**:
+- 桌面版使用 DuckDB WASM，数据存储在本地
+- 检查应用数据目录是否有写入权限
+- 尝试清除应用数据重新初始化
+
+### 5. API Key 配置
+
+**问题**: AI 不响应
+
+**解决方案**:
+- 检查设置中的 API Key 是否正确
+- 确认 API Key 有足够的额度
+- 检查网络连接
+- 查看浏览器控制台或应用日志
+
+---
+
+## 贡献指南
+
+我们欢迎所有形式的贡献！
+
+### 如何贡献
+
+1. Fork 本仓库
+2. 创建你的特性分支
+3. 提交你的更改
+4. 推送到你的 Fork
+5. 创建 Pull Request
+
+详细步骤请参考 [CONTRIBUTING.md](./.github/CONTRIBUTING.md)。
+
+### 我们需要的帮助
+
+- 🎨 **设计师**: UI/UX 设计、Live2D/VRM 模型
+- 💻 **开发者**: 前端、后端、AI、游戏集成
+- 📝 **文档**: 翻译、教程、示例
+- 🧪 **测试**: Bug 报告、功能测试
+- 🎮 **游戏集成**: Minecraft、Factorio 等
+
+### 社区
+
+- [Discord 服务器](https://discord.gg/TgQ3Cu2F7A)
+- [GitHub Discussions](https://github.com/moeru-ai/airi/discussions)
+- [Telegram 群组](https://t.me/+7M_ZKO3zUHFlOThh)
+
+---
+
+## 支持的 LLM 提供商
+
+通过 [xsai](https://github.com/moeru-ai/xsai) 支持：
+
+- ✅ [AIHubMix](https://aihubmix.com/?aff=OOiX) (推荐)
+- ✅ [OpenRouter](https://openrouter.ai/)
+- ✅ [OpenAI](https://platform.openai.com/)
+- ✅ [Anthropic Claude](https://anthropic.com)
+- ✅ [Google Gemini](https://developers.generativeai.google)
+- ✅ [DeepSeek](https://www.deepseek.com/)
+- ✅ [Qwen](https://help.aliyun.com/document_detail/2400395.html)
+- ✅ [xAI](https://x.ai/)
+- ✅ [Groq](https://wow.groq.com/)
+- ✅ [Ollama](https://github.com/ollama/ollama) (本地)
+- ✅ [vLLM](https://github.com/vllm-project/vllm) (本地)
+- ✅ 更多...
+
+---
+
+## 子项目
+
+从 AIRI 诞生的独立项目：
+
+- [Awesome AI VTuber](https://github.com/proj-airi/awesome-ai-vtuber) - AI VTuber 资源列表
+- [`unspeech`](https://github.com/moeru-ai/unspeech) - 通用 ASR/TTS 代理服务器
+- [`xsai`](https://github.com/moeru-ai/xsai) - 轻量级 LLM SDK
+- [MCP Launcher](https://github.com/moeru-ai/mcp-launcher) - MCP 服务器启动器
+- [AIRI Factorio](https://github.com/moeru-ai/airi-factorio) - Factorio 游戏集成
+- 更多请查看 [@proj-airi](https://github.com/proj-airi) 组织
+
+---
+
+## 许可证
+
+[MIT License](./LICENSE)
+
+---
+
+## 致谢
+
+- [Neuro-sama](https://www.youtube.com/@Neurosama) - 灵感来源
+- [pixiv/ChatVRM](https://github.com/pixiv/ChatVRM) - VRM 实现参考
+- [Reka UI](https://github.com/unovue/reka-ui) - UI 组件库
+- 所有贡献者和支持者 ❤️
+
+---
 
 ## Star History
 

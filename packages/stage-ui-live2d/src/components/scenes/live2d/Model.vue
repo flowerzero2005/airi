@@ -215,8 +215,10 @@ async function loadModel() {
       return
     }
 
+    console.info('[Live2D] Starting model load:', { url: modelSrcRef.value, id: props.modelId })
     const live2DModel = new Live2DModel<PixiLive2DInternalModel>()
     await Live2DFactory.setupLive2DModel(live2DModel, { url: modelSrcRef.value, id: props.modelId }, { autoInteract: false })
+    console.info('[Live2D] Model loaded successfully')
     availableMotions.value.forEach((motion) => {
       if (motion.motionName in Emotion) {
         motionMap.value[motion.fileName] = motion.motionName
@@ -369,6 +371,16 @@ async function loadModel() {
 
     emits('modelLoaded')
   }
+  catch (error) {
+    console.error('[Live2D] Failed to load model:', {
+      error,
+      modelSrc: modelSrcRef.value,
+      modelId: props.modelId,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    })
+    // 不要重新抛出错误，让 finally 块正常执行
+  }
   finally {
     modelLoading.value = false
     componentState.value = 'mounted'
@@ -416,7 +428,17 @@ function updateDropShadowFilter() {
 }
 
 watch([() => props.width, () => props.height], handleResize)
-watch(modelSrcRef, async () => await loadModel(), { immediate: true })
+watch(modelSrcRef, async () => {
+  try {
+    await loadModel()
+  }
+  catch (error) {
+    console.error('[Live2D] Model load failed in watch handler:', error)
+    // 确保状态被重置
+    modelLoading.value = false
+    componentState.value = 'mounted'
+  }
+}, { immediate: true })
 watch(dark, updateDropShadowFilter, { immediate: true })
 watch([model, themeColorsHue], updateDropShadowFilter)
 watch(live2dShadowEnabled, updateDropShadowFilter)

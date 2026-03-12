@@ -4,13 +4,13 @@ import { ContextUpdateStrategy } from '@proj-airi/server-sdk'
 import { defineStore } from 'pinia'
 import { ref, toRaw } from 'vue'
 
-import { getEventSourceKey } from '../../utils/event-source'
-
 export const useChatContextStore = defineStore('chat-context', () => {
   const activeContexts = ref<Record<string, ContextMessage[]>>({})
 
   function ingestContextMessage(envelope: ContextMessage) {
-    const sourceKey = getEventSourceKey(envelope)
+    // Use contextId as the key for grouping contexts
+    const sourceKey = envelope.contextId || 'unknown'
+
     if (!activeContexts.value[sourceKey]) {
       activeContexts.value[sourceKey] = []
     }

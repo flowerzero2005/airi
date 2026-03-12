@@ -13,7 +13,7 @@ import { ref, toRaw } from 'vue'
 import { useAnalytics } from '../composables'
 import { useLlmmarkerParser } from '../composables/llm-marker-parser'
 import { categorizeResponse, createStreamingCategorizer } from '../composables/response-categoriser'
-import { createDatetimeContext } from './chat/context-providers'
+import { createDatetimeContext, createNotebookMemoryContext } from './chat/context-providers'
 import { useChatContextStore } from './chat/context-store'
 import { createChatHooks } from './chat/hooks'
 import { useChatSessionStore } from './chat/session-store'
@@ -111,6 +111,20 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
     // Inject current datetime context before composing the message
     chatContext.ingestContextMessage(createDatetimeContext())
 
+    // Inject relevant memories from notebook based on user message
+    // Pass recent messages for context-aware search when user message is short
+    const memoryContext = await createNotebookMemoryContext(
+      sendingMessage,
+      chatSession.getSessionMessages(sessionId).slice(-6), // 最近3轮对话
+    )
+    if (memoryContext.text) {
+      console.log('[Chat] Injecting memory context:', memoryContext.text.slice(0, 100))
+      chatContext.ingestContextMessage(memoryContext)
+    }
+    else {
+      console.log('[Chat] No memory context to inject')
+    }
+
     const sendingCreatedAt = Date.now()
     const streamingMessageContext: ChatStreamEventContext = {
       message: { role: 'user', content: sendingMessage, createdAt: sendingCreatedAt, id: nanoid() },
@@ -172,7 +186,8 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
 
       const sessionMessagesForSend = chatSession.getSessionMessages(sessionId)
       sessionMessagesForSend.push({ role: 'user', content: finalContent, createdAt: sendingCreatedAt, id: nanoid() })
-      chatSession.persistSessionMessages(sessionId)
+      // 立即保存用户消息，避免刷新丢失
+      await chatSession.persistSessionMessages(sessionId)
 
       const categorizer = createStreamingCategorizer(activeProvider.value)
       let streamPosition = 0
@@ -262,21 +277,33 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
         const system = newMessages.slice(0, 1)
         const afterSystem = newMessages.slice(1, newMessages.length)
 
-        newMessages = [
-          ...system,
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: ''
-                  + 'These are the contextual information retrieved or on-demand updated from other modules, you may use them as context for chat, or reference of the next action, tool call, etc.:\n'
-                  + `${Object.entries(contextsSnapshot).map(([key, value]) => `Module ${key}: ${JSON.stringify(value)}`).join('\n')}\n`,
-              },
-            ],
-          },
-          ...afterSystem,
-        ]
+        // Format contexts: extract text from each context message
+        const contextTexts = Object.entries(contextsSnapshot)
+          .map(([key, messages]) => {
+            const texts = messages
+              .map(msg => msg.text)
+              .filter(text => text && text.trim().length > 0)
+              .join('\n')
+            return texts ? `[${key}]\n${texts}` : ''
+          })
+          .filter(text => text.length > 0)
+          .join('\n\n')
+
+        if (contextTexts) {
+          newMessages = [
+            ...system,
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Contextual information from other modules:\n\n${contextTexts}\n`,
+                },
+              ],
+            },
+            ...afterSystem,
+          ]
+        }
       }
 
       streamingMessageContext.composedMessage = newMessages as Message[]
@@ -316,6 +343,17 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
             case 'text-delta':
               fullText += event.text
               await parser.consume(event.text)
+
+              // 定期保存 AI 回复（每100个字符保存一次）
+              if (fullText.length % 100 < event.text.length && buildingMessage.slices.length > 0) {
+                if (!sessionMessagesForSend.find(m => m.id === buildingMessage.id)) {
+                  sessionMessagesForSend.push(toRaw(buildingMessage))
+                }
+                // 不等待保存完成，避免阻塞流式输出
+                chatSession.persistSessionMessages(sessionId).catch((err) => {
+                  console.error('[Chat] Failed to persist during streaming:', err)
+                })
+              }
               break
             case 'finish':
               break
@@ -329,7 +367,7 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
 
       if (!isStaleGeneration() && buildingMessage.slices.length > 0) {
         sessionMessagesForSend.push(toRaw(buildingMessage))
-        chatSession.persistSessionMessages(sessionId)
+        await chatSession.persistSessionMessages(sessionId)
       }
 
       await hooks.emitStreamEndHooks(streamingMessageContext)
@@ -337,11 +375,19 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
 
       await hooks.emitAfterSendHooks(sendingMessage, streamingMessageContext)
       await hooks.emitAssistantMessageHooks({ ...buildingMessage }, fullText, streamingMessageContext)
+
+      console.log('[Chat] ========== 准备触发 onChatTurnComplete 钩子 ==========')
+      console.log('[Chat] 用户消息:', sendingMessage.slice(0, 50))
+      console.log('[Chat] 助手回复:', fullText.slice(0, 50))
+      console.log('[Chat] 钩子数量:', (hooks as any).onChatTurnCompleteHooks?.length || 0)
+
       await hooks.emitChatTurnCompleteHooks({
         output: { ...buildingMessage },
         outputText: fullText,
         toolCalls: sessionMessagesForSend.filter(msg => msg.role === 'tool') as ToolMessage[],
       }, streamingMessageContext)
+
+      console.log('[Chat] ========== onChatTurnComplete 钩子已触发 ==========')
 
       if (isForegroundSession()) {
         streamingMessage.value = { role: 'assistant', content: '', slices: [], tool_results: [] }

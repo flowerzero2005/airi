@@ -187,8 +187,20 @@ export function createChatHooks(): ChatHookRegistry {
   }
 
   async function emitChatTurnCompleteHooks(chat: { output: StreamingAssistantMessage, outputText: string, toolCalls: ToolMessage[] }, context: ChatStreamEventContext) {
-    for (const hook of onChatTurnCompleteHooks)
-      await hook(chat, context)
+    console.log('[ChatHooks] emitChatTurnCompleteHooks 被调用')
+    console.log('[ChatHooks] 钩子数量:', onChatTurnCompleteHooks.length)
+    for (let i = 0; i < onChatTurnCompleteHooks.length; i++) {
+      const hook = onChatTurnCompleteHooks[i]
+      console.log(`[ChatHooks] 执行钩子 ${i + 1}/${onChatTurnCompleteHooks.length}`)
+      try {
+        await hook(chat, context)
+        console.log(`[ChatHooks] 钩子 ${i + 1} 执行成功`)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] 钩子 ${i + 1} 执行失败:`, error)
+      }
+    }
+    console.log('[ChatHooks] 所有钩子执行完毕')
   }
 
   return {
