@@ -185,6 +185,13 @@ export class OPFSCache {
     context.opfsUrl = blobUrl
 
     try {
+      // Handle Vite's @fs protocol URLs - let ZipLoader handle them directly
+      if (blobUrl.includes('/@fs/')) {
+        console.debug(`[OPFS] Detected @fs URL, passing through to ZipLoader:`, blobUrl)
+        context.source = blobUrl
+        return next()
+      }
+
       const res = await fetch(blobUrl)
       if (!res.ok) {
         throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText}`)

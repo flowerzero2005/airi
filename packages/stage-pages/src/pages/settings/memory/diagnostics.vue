@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import { useCharacterNotebookStore } from '@proj-airi/stage-ui/stores/character/notebook'
+import { useMemoryManager } from '@proj-airi/stage-ui/stores/chat/memory-manager'
 import { onMounted, ref } from 'vue'
-
-import { useCharacterNotebookStore } from '../../../stores/character/notebook'
-import { useMemoryManager } from '../../../stores/chat/memory-manager'
 
 const notebookStore = useCharacterNotebookStore()
 const memoryManager = useMemoryManager()

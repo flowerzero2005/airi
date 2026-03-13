@@ -21,6 +21,7 @@ const containerRef = ref<HTMLDivElement>()
 const isPixiCanvasReady = ref(false)
 const pixiApp = ref<Application>()
 const pixiAppCanvas = ref<HTMLCanvasElement>()
+const initError = ref<string | null>(null)
 
 function resolveMaxFps(limit?: number) {
   if (!limit || limit <= 0)
@@ -55,14 +56,36 @@ async function initLive2DPixiStage(parent: HTMLDivElement) {
   // We handle the interactions (e.g., mouse-based focusing at) manually
   // extensions.add(InteractionManager)
 
-  pixiApp.value = new Application({
-    width: props.width * props.resolution,
-    height: props.height * props.resolution,
-    backgroundAlpha: 0,
-    preserveDrawingBuffer: true,
-    autoDensity: false,
-    resolution: 1,
-  })
+  try {
+    pixiApp.value = new Application({
+      width: props.width * props.resolution,
+      height: props.height * props.resolution,
+      backgroundAlpha: 0,
+      preserveDrawingBuffer: true,
+      autoDensity: false,
+      resolution: 1,
+    })
+    console.info('[Live2D] Pixi initialized successfully')
+    initError.value = null
+  }
+  catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error('[Live2D] Failed to initialize Pixi stage:', error)
+    console.error('[Live2D] WebGL initialization failed. This may be due to:')
+    console.error('[Live2D] 1. Hardware acceleration is disabled')
+    console.error('[Live2D] 2. GPU drivers are outdated')
+    console.error('[Live2D] 3. GPU is blocklisted')
+    console.error('[Live2D] Please check Electron GPU status at chrome://gpu')
+
+    initError.value = `WebGL initialization failed: ${errorMsg}`
+
+    // Set both flags to false to prevent rendering attempts
+    isPixiCanvasReady.value = false
+    componentState.value = 'mounted'
+
+    // Don't throw - let the component mount in error state
+    return
+  }
 
   installRenderGuard(pixiApp.value)
   pixiApp.value.stage.scale.set(props.resolution)
@@ -99,15 +122,7 @@ watch(() => props.maxFps, (limit) => {
 
 onMounted(async () => {
   if (containerRef.value) {
-    try {
-      await initLive2DPixiStage(containerRef.value)
-    }
-    catch (error) {
-      console.error('[Live2D] Failed to initialize Pixi stage:', error)
-      // 确保状态被重置
-      isPixiCanvasReady.value = false
-      componentState.value = 'mounted'
-    }
+    await initLive2DPixiStage(containerRef.value)
   }
 })
 onUnmounted(() => pixiApp.value?.destroy())
@@ -148,6 +163,22 @@ import.meta.hot?.dispose(() => {
 
 <template>
   <div ref="containerRef" h-full w-full>
-    <slot v-if="isPixiCanvasReady" :app="pixiApp" />
+    <div v-if="initError" flex="~ col" h-full items-center justify-center p-4 text-center>
+      <div mb-2 text-red-500 font-bold>
+        WebGL Initialization Failed
+      </div>
+      <div mb-4 text-sm text-gray-600 dark:text-gray-400>
+        {{ initError }}
+      </div>
+      <div text-xs text-gray-500>
+        <p>Please check:</p>
+        <ul mt-2 text-left space-y-1>
+          <li>• Hardware acceleration is enabled</li>
+          <li>• GPU drivers are up to date</li>
+          <li>• Visit chrome://gpu in DevTools for details</li>
+        </ul>
+      </div>
+    </div>
+    <slot v-else-if="isPixiCanvasReady" :app="pixiApp" />
   </div>
 </template>

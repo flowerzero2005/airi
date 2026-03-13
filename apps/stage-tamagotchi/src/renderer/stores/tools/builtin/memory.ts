@@ -1,12 +1,10 @@
-import type { Tool } from '@xsai/tool'
-
 import { tool } from '@xsai/tool'
 import { z } from 'zod'
 
 /**
  * Memory search tool for AI to actively query memories
  */
-export function createMemoryTool(): Tool {
+export function createMemoryTool(): ReturnType<typeof tool> {
   return tool({
     name: 'search_memory',
     description: '搜索长期记忆。当用户提到过去的信息、个人偏好、或你需要回忆之前的对话内容时，使用此工具主动搜索相关记忆。',

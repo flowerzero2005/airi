@@ -17,6 +17,16 @@ const notebookStore = localforage.createInstance({
   description: 'AIRI Notebook Storage',
 })
 
+// 安全的克隆函数，优先使用 structuredClone，失败则降级到 JSON
+function safeClone<T>(data: T): T {
+  try {
+    return structuredClone(data)
+  }
+  catch {
+    return JSON.parse(JSON.stringify(data))
+  }
+}
+
 export const notebookRepo = {
   async load(characterId: string): Promise<NotebookData | null> {
     console.log('[NotebookRepo] load called with characterId:', characterId)
@@ -83,10 +93,9 @@ export const notebookRepo = {
       const currentVersion = currentData?.version || 0
       console.error('[NotebookRepo] 当前版本:', currentVersion)
 
-      // 使用结构化克隆而不是 JSON.parse(JSON.stringify())，更高效且保留类型
       const saveData: NotebookData = {
-        entries: structuredClone(data.entries),
-        tasks: structuredClone(data.tasks),
+        entries: safeClone(data.entries),
+        tasks: safeClone(data.tasks),
         version: currentVersion + 1,
         lastSyncedAt: Date.now(),
       }
@@ -96,30 +105,8 @@ export const notebookRepo = {
       console.error('[NotebookRepo] ========== 数据已成功保存到 IndexedDB ==========')
     }
     catch (error) {
-      // 如果 structuredClone 不支持，降级到 JSON 方法
-      if (error instanceof Error && error.message.includes('structuredClone')) {
-        console.warn('[NotebookRepo] structuredClone not supported, falling back to JSON')
-        try {
-          const currentData = await notebookStore.getItem<NotebookData>(key)
-          const currentVersion = currentData?.version || 0
-          const saveData: NotebookData = {
-            entries: JSON.parse(JSON.stringify(data.entries)),
-            tasks: JSON.parse(JSON.stringify(data.tasks)),
-            version: currentVersion + 1,
-            lastSyncedAt: Date.now(),
-          }
-          await notebookStore.setItem(key, saveData)
-          console.error('[NotebookRepo] ========== 数据已成功保存到 IndexedDB（JSON 方式）==========')
-        }
-        catch (fallbackError) {
-          console.error('[NotebookRepo] Error during fallback save:', fallbackError)
-          throw fallbackError
-        }
-      }
-      else {
-        console.error('[NotebookRepo] ========== Error during save ==========:', error)
-        throw error
-      }
+      console.error('[NotebookRepo] ========== Error during save ==========:', error)
+      throw error
     }
   },
 
@@ -137,8 +124,8 @@ export const notebookRepo = {
       const saveData = {
         characterId,
         data: {
-          entries: structuredClone(data.entries),
-          tasks: structuredClone(data.tasks),
+          entries: safeClone(data.entries),
+          tasks: safeClone(data.tasks),
           version: data.version,
         },
         queuedAt: Date.now(),
@@ -146,23 +133,8 @@ export const notebookRepo = {
       await notebookStore.setItem(queueKey, saveData)
     }
     catch (error) {
-      // 降级到 JSON 方法
-      if (error instanceof Error && error.message.includes('structuredClone')) {
-        const saveData = {
-          characterId,
-          data: {
-            entries: JSON.parse(JSON.stringify(data.entries)),
-            tasks: JSON.parse(JSON.stringify(data.tasks)),
-            version: data.version,
-          },
-          queuedAt: Date.now(),
-        }
-        await notebookStore.setItem(queueKey, saveData)
-      }
-      else {
-        console.error('[NotebookRepo] Error adding to sync queue:', error)
-        throw error
-      }
+      console.error('[NotebookRepo] Error adding to sync queue:', error)
+      throw error
     }
   },
 

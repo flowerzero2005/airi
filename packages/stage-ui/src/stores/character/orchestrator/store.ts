@@ -1,13 +1,14 @@
 import type { WebSocketBaseEvent, WebSocketEventOf, WebSocketEvents } from '@proj-airi/server-sdk'
 
 import { defineStore, storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import { useCharacterNotebookStore, useCharacterStore } from '../'
 import { useLLM } from '../../llm'
 import { useModsServerChannelStore } from '../../mods/api/channel-server'
 import { useConsciousnessStore } from '../../modules/consciousness'
 import { useProvidersStore } from '../../providers'
+import { useMemoryAdvancedSettingsStore } from '../../settings/memory-advanced'
 import { setupAgentSparkNotifyHandler } from './agents/event-handler-spark-notify'
 
 export { sparkCommandSchema } from './agents/event-handler-spark-notify'
@@ -38,6 +39,9 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
     maxAttempts: 3,
   })
   let tickTimer: ReturnType<typeof setInterval> | undefined
+  let proactiveTopicTimer: ReturnType<typeof setInterval> | undefined
+  const lastProactiveTopicTime = ref<number>(0)
+  const memoryAdvancedSettings = useMemoryAdvancedSettingsStore()
   const sparkNotifyAgent = setupAgentSparkNotifyHandler({
     stream,
     getActiveProvider: () => activeProvider.value,
@@ -143,6 +147,63 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
     }
   }
 
+  function isWithinAllowedTimeRange(now: number): boolean {
+    const { start, end } = memoryAdvancedSettings.settings.proactiveTimeRange
+    const currentHour = new Date(now).getHours()
+
+    if (start <= end) {
+      return currentHour >= start && currentHour < end
+    }
+    else {
+      // Handle overnight range (e.g., 22:00 - 9:00)
+      return currentHour >= start || currentHour < end
+    }
+  }
+
+  function generateProactiveTopic(now: number) {
+    if (!memoryAdvancedSettings.settings.enableProactiveTopic)
+      return
+
+    if (!isWithinAllowedTimeRange(now)) {
+      console.log('[Proactive Topic] Outside allowed time range, skipping')
+      return
+    }
+
+    // 创建一个主动话题事件，让 AI 根据记忆和上下文自己决定说什么
+    const event: WebSocketEventOf<'spark:notify'> = {
+      type: 'spark:notify',
+      source: 'character:proactive-topic',
+      data: {
+        id: `proactive-${now}`,
+        eventId: `proactive-${now}`,
+        kind: 'chat',
+        urgency: 'later',
+        headline: 'Time to initiate a proactive conversation',
+        note: [
+          'You notice that the user hasn\'t said anything for a while.',
+          'Based on your memories and recent conversations, think about what would be a good topic to bring up.',
+          'You can:',
+          '- Ask about something they mentioned before',
+          '- Share something interesting you thought of',
+          '- Check how they\'re doing with something they were working on',
+          '- Remind them of something they might have forgotten',
+          '- Just start a casual conversation about anything',
+          '',
+          'Be natural and spontaneous. Don\'t force it if you don\'t have anything meaningful to say.',
+          'You can also use the builtIn_sparkNoResponse tool if you feel it\'s not a good time to talk.',
+        ].join('\n'),
+        destinations: ['character'],
+        payload: {
+          timestamp: now,
+          type: 'proactive-conversation',
+        },
+      },
+    }
+
+    console.log('[Proactive Topic] Triggered proactive conversation check')
+    enqueueSparkNotify(event, { reason: 'proactive-topic' })
+  }
+
   async function tick() {
     if (processing.value)
       return
@@ -192,6 +253,79 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
     tickTimer = undefined
   }
 
+  function startProactiveTopicTimer() {
+    if (proactiveTopicTimer)
+      return
+
+    if (!memoryAdvancedSettings.settings.enableProactiveTopic)
+      return
+
+    const getNextInterval = () => {
+      if (memoryAdvancedSettings.settings.proactiveRandomInterval) {
+        const min = memoryAdvancedSettings.settings.proactiveMinInterval
+        const max = memoryAdvancedSettings.settings.proactiveMaxInterval
+        const randomMinutes = Math.random() * (max - min) + min
+        return randomMinutes * 60 * 1000
+      }
+      else {
+        return memoryAdvancedSettings.settings.proactiveCheckInterval * 60 * 1000
+      }
+    }
+
+    const scheduleNext = () => {
+      const intervalMs = getNextInterval()
+      const intervalMinutes = (intervalMs / 60000).toFixed(1)
+      console.log(`[Proactive Topic] Next check in ${intervalMinutes} minutes`)
+
+      proactiveTopicTimer = setTimeout(() => {
+        const now = Date.now()
+        generateProactiveTopic(now)
+        scheduleNext() // Schedule the next one
+      }, intervalMs) as any
+    }
+
+    console.log('[Proactive Topic] Timer started')
+    scheduleNext()
+  }
+
+  function stopProactiveTopicTimer() {
+    if (!proactiveTopicTimer)
+      return
+
+    console.log('[Proactive Topic] Timer stopped')
+    clearTimeout(proactiveTopicTimer as any)
+    proactiveTopicTimer = undefined
+  }
+
+  // Watch for settings changes
+  watch(
+    () => memoryAdvancedSettings.settings.enableProactiveTopic,
+    (enabled) => {
+      if (enabled) {
+        startProactiveTopicTimer()
+      }
+      else {
+        stopProactiveTopicTimer()
+      }
+    },
+    { immediate: true },
+  )
+
+  watch(
+    () => [
+      memoryAdvancedSettings.settings.proactiveCheckInterval,
+      memoryAdvancedSettings.settings.proactiveRandomInterval,
+      memoryAdvancedSettings.settings.proactiveMinInterval,
+      memoryAdvancedSettings.settings.proactiveMaxInterval,
+    ],
+    () => {
+      if (memoryAdvancedSettings.settings.enableProactiveTopic) {
+        stopProactiveTopicTimer()
+        startProactiveTopicTimer()
+      }
+    },
+  )
+
   async function handleSparkEmit(_: WebSocketBaseEvent<'spark:emit', WebSocketEvents['spark:emit']>) {
     // Currently no-op
     return undefined
@@ -217,6 +351,7 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
     })
 
     startTicker()
+    startProactiveTopicTimer()
   }
 
   return {
@@ -224,10 +359,13 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
     pendingNotifies,
     scheduledNotifies,
     attentionConfig,
+    lastProactiveTopicTime,
 
     initialize,
     startTicker,
     stopTicker,
+    startProactiveTopicTimer,
+    stopProactiveTopicTimer,
 
     handleSparkNotify: handleIncomingSparkNotify,
     handleSparkEmit,

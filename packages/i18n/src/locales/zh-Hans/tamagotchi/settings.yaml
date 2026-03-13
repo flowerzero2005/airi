@@ -27,6 +27,82 @@ pages:
           use-window-mouse:
             title: 使用窗口鼠标工具
             description: 测试 Electron 窗口鼠标位置
+    memory-advanced:
+      title: 高级设置
+      description: 配置系统的高级功能
+      info:
+        title: 系统高级功能
+        description: 这些功能默认关闭，启用后可以增强 AI 的记忆能力和对话体验。所有功能都经过精心设计，确保向后兼容。
+      isolation:
+        title: 记忆隔离
+        multi-user:
+          label: 启用多用户识别
+          description: 根据设备自动识别不同用户，为每个用户维护独立的记忆空间
+          warning: 首次启用会自动迁移现有数据到新用户，原有数据不会丢失
+      semantic:
+        title: 语义理解
+        search:
+          label: 启用语义搜索
+          description: 使用知识图谱扩展关键词，提高记忆召回的准确率和覆盖面
+        value-judgment:
+          label: 智能价值判断
+          description: AI 二次评估记忆价值，自动过滤临时性和低价值信息
+      natural:
+        title: 自然对话
+        conversation-init:
+          label: 对话初始化
+          description: 根据记忆生成个性化开场白，让每次对话更自然
+        output:
+          label: 自然输出节奏
+          description: 在句子间添加停顿，模拟真实的思考过程
+        output-delay:
+          label: 停顿时长
+          description: 句子间停顿的时间（毫秒）
+        semantic-segmentation:
+          label: 启用语义分段
+          description: 根据语义将回复拆分成多个片段，而不是简单按句子分段
+          badge: 推荐
+        bubble-delay:
+          label: 气泡间延迟时间
+          description: 多个气泡之间的延迟时间（毫秒），范围 500-5000ms
+        adaptive-bubble-delay:
+          label: 启用自适应气泡延迟
+          description: 根据下一个气泡的文字数量自动调整延迟时间（启用后将覆盖固定延迟设置）
+        typing-speed:
+          label: 打字机速度
+          description: 气泡内文字逐字显示的速度（毫秒/字符），范围 10-100ms
+      message:
+        title: 消息处理
+        merging:
+          label: 启用消息合并
+          description: 连续发送多条消息时，自动合并后一起处理
+          badge: 推荐
+        merge-delay:
+          label: 合并等待时间
+          description: 等待多久后合并消息（毫秒）
+      proactive:
+        title: 主动话题
+        experimental: 实验性功能
+        enable:
+          label: 启用主动话题
+          description: AI 会在合适时机主动发起对话，提醒待办事项或关心近况
+        random-interval:
+          label: 启用随机间隔
+          description: 让 AI 在随机时间主动说话，更自然不刻意
+        interval:
+          label: 检查间隔
+          description: 多久检查一次待发起话题（分钟）
+        min-interval:
+          label: 最小间隔
+          description: 随机间隔的最小值（分钟）
+        max-interval:
+          label: 最大间隔
+          description: 随机间隔的最大值（分钟）
+        time-range:
+          label: 允许时间段
+          description: AI 可以主动发起对话的时间范围（24小时制）
+          unit: 时
+      reset: 重置为默认值
 devtools:
   title: 开发者选项
   pages:

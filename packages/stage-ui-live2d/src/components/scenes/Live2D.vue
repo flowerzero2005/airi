@@ -51,9 +51,9 @@ const live2d = useLive2d()
 const { position } = storeToRefs(live2d)
 
 watch([componentStateModel, componentStateCanvas], () => {
-  componentState.value = (componentStateModel.value === 'mounted' && componentStateCanvas.value === 'mounted')
-    ? 'mounted'
-    : 'loading'
+  // If canvas mounted (regardless of WebGL success), consider the component mounted
+  // This prevents infinite loading when WebGL fails
+  componentState.value = componentStateCanvas.value === 'mounted' ? 'mounted' : 'loading'
 })
 
 defineExpose({

@@ -50,8 +50,6 @@ const filteredEntries = computed(() => {
 })
 
 // 统计
-const total = computed(() => notebookStore.entries?.length || 0)
-
 const stats = computed(() => ({
   total: notebookStore.entries?.length || 0,
   high: notebookStore.entries?.filter(e => e.metadata?.importance === 'high').length || 0,
@@ -342,8 +340,8 @@ async function runMaintenance() {
         // 按重要性和时间排序
         const sortedEntries = [...notebookStore.entries].sort((a, b) => {
           const importanceOrder = { high: 3, medium: 2, low: 1 }
-          const aImportance = importanceOrder[a.metadata?.importance as string] || 1
-          const bImportance = importanceOrder[b.metadata?.importance as string] || 1
+          const aImportance = importanceOrder[a.metadata?.importance as keyof typeof importanceOrder] || 1
+          const bImportance = importanceOrder[b.metadata?.importance as keyof typeof importanceOrder] || 1
 
           if (memorySettings.settings.cleanupLowImportance) {
             if (aImportance !== bImportance)
@@ -565,6 +563,11 @@ async function summarizeMemories(texts: string[]): Promise<string> {
     const providerConfig = providersStore.getProviderConfig(providerName)
     const provider = await providersStore.getProviderInstance(providerName)
 
+    if (!('chat' in provider)) {
+      console.warn('[MemorySummarize] Provider does not support chat, using simple merge')
+      return texts.join(' | ')
+    }
+
     const prompt = `以下是多条相似的记忆，请合并去重，只保留不重复的关键信息，用简洁的语言总结（不超过100字）：
 
 ${texts.map((t, i) => `${i + 1}. ${t}`).join('\n')}
@@ -581,7 +584,7 @@ ${texts.map((t, i) => `${i + 1}. ${t}`).join('\n')}
     const finalConfig = {
       ...chatConfig,
       ...providerConfig,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user' as const, content: prompt }],
     }
 
     const response = await generateText(finalConfig)
@@ -1050,7 +1053,7 @@ async function mergeGroup(group: any) {
             >
             <span
               v-if="entry.metadata?.importance"
-              :class="getImportanceColor(entry.metadata.importance)"
+              :class="getImportanceColor(entry.metadata.importance as string)"
               class="rounded px-2 py-1 text-xs font-medium"
             >
               {{ entry.metadata.importance === 'high' ? '高' : entry.metadata.importance === 'medium' ? '中' : '普通' }}

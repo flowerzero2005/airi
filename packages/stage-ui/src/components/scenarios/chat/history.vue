@@ -64,6 +64,7 @@ const renderMessages = computed<ChatHistoryItem[]>(() => {
     return props.messages
 
   const hasStreamAlready = streamTs && props.messages.some(msg => msg?.role === 'assistant' && msg?.createdAt === streamTs)
+
   if (hasStreamAlready)
     return props.messages
 

@@ -1,6 +1,6 @@
-import type { TtsInputChunkOptions } from '@proj-rin/pipelines-audio'
+import type { TtsInputChunkOptions } from '@proj-airi/pipelines-audio'
 
-import { useLocalStorageManualReset } from '@proj-rin/stage-shared/composables'
+import { useLocalStorageManualReset } from '@proj-airi/stage-shared/composables'
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 

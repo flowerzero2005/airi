@@ -432,6 +432,10 @@ export const useChatSessionStore = defineStore('chat-session', () => {
       characters: {},
     }
 
+    // 重置对话初始化状态，确保下次对话会重新初始化
+    const { resetConversationInitialization } = await import('./context-providers')
+    resetConversationInitialization()
+
     await createSession(characterId)
   }
 

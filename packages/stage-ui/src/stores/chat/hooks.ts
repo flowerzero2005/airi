@@ -142,65 +142,123 @@ export function createChatHooks(): ChatHookRegistry {
   }
 
   async function emitBeforeMessageComposedHooks(message: string, context: Omit<ChatStreamEventContext, 'composedMessage'>) {
-    for (const hook of onBeforeMessageComposedHooks)
-      await hook(message, context)
+    for (let i = 0; i < onBeforeMessageComposedHooks.length; i++) {
+      const hook = onBeforeMessageComposedHooks[i]
+      try {
+        await hook(message, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onBeforeMessageComposed hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitAfterMessageComposedHooks(message: string, context: ChatStreamEventContext) {
-    for (const hook of onAfterMessageComposedHooks)
-      await hook(message, context)
+    for (let i = 0; i < onAfterMessageComposedHooks.length; i++) {
+      const hook = onAfterMessageComposedHooks[i]
+      try {
+        await hook(message, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onAfterMessageComposed hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitBeforeSendHooks(message: string, context: ChatStreamEventContext) {
-    for (const hook of onBeforeSendHooks)
-      await hook(message, context)
+    for (let i = 0; i < onBeforeSendHooks.length; i++) {
+      const hook = onBeforeSendHooks[i]
+      try {
+        await hook(message, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onBeforeSend hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitAfterSendHooks(message: string, context: ChatStreamEventContext) {
-    for (const hook of onAfterSendHooks)
-      await hook(message, context)
+    for (let i = 0; i < onAfterSendHooks.length; i++) {
+      const hook = onAfterSendHooks[i]
+      try {
+        await hook(message, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onAfterSend hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitTokenLiteralHooks(literal: string, context: ChatStreamEventContext) {
-    for (const hook of onTokenLiteralHooks)
-      await hook(literal, context)
+    for (let i = 0; i < onTokenLiteralHooks.length; i++) {
+      const hook = onTokenLiteralHooks[i]
+      try {
+        await hook(literal, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onTokenLiteral hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitTokenSpecialHooks(special: string, context: ChatStreamEventContext) {
-    for (const hook of onTokenSpecialHooks)
-      await hook(special, context)
+    for (let i = 0; i < onTokenSpecialHooks.length; i++) {
+      const hook = onTokenSpecialHooks[i]
+      try {
+        await hook(special, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onTokenSpecial hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitStreamEndHooks(context: ChatStreamEventContext) {
-    for (const hook of onStreamEndHooks)
-      await hook(context)
+    for (let i = 0; i < onStreamEndHooks.length; i++) {
+      const hook = onStreamEndHooks[i]
+      try {
+        await hook(context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onStreamEnd hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitAssistantResponseEndHooks(message: string, context: ChatStreamEventContext) {
-    for (const hook of onAssistantResponseEndHooks)
-      await hook(message, context)
+    for (let i = 0; i < onAssistantResponseEndHooks.length; i++) {
+      const hook = onAssistantResponseEndHooks[i]
+      try {
+        await hook(message, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onAssistantResponseEnd hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitAssistantMessageHooks(message: StreamingAssistantMessage, messageText: string, context: ChatStreamEventContext) {
-    for (const hook of onAssistantMessageHooks)
-      await hook(message, messageText, context)
+    for (let i = 0; i < onAssistantMessageHooks.length; i++) {
+      const hook = onAssistantMessageHooks[i]
+      try {
+        await hook(message, messageText, context)
+      }
+      catch (error) {
+        console.error(`[ChatHooks] onAssistantMessage hook ${i + 1} execution failed:`, error)
+      }
+    }
   }
 
   async function emitChatTurnCompleteHooks(chat: { output: StreamingAssistantMessage, outputText: string, toolCalls: ToolMessage[] }, context: ChatStreamEventContext) {
-    console.log('[ChatHooks] emitChatTurnCompleteHooks 被调用')
-    console.log('[ChatHooks] 钩子数量:', onChatTurnCompleteHooks.length)
     for (let i = 0; i < onChatTurnCompleteHooks.length; i++) {
       const hook = onChatTurnCompleteHooks[i]
-      console.log(`[ChatHooks] 执行钩子 ${i + 1}/${onChatTurnCompleteHooks.length}`)
       try {
         await hook(chat, context)
-        console.log(`[ChatHooks] 钩子 ${i + 1} 执行成功`)
       }
       catch (error) {
-        console.error(`[ChatHooks] 钩子 ${i + 1} 执行失败:`, error)
+        console.error(`[ChatHooks] Hook ${i + 1} execution failed:`, error)
       }
     }
-    console.log('[ChatHooks] 所有钩子执行完毕')
   }
 
   return {

@@ -16,8 +16,6 @@ import App from './App.vue'
 import { i18n } from './modules/i18n'
 
 import './modules/posthog'
-
-// eslint-disable-next-line perfectionist/sort-imports
 import '@unocss/reset/tailwind.css'
 import 'splitpanes/dist/splitpanes.css'
 import 'vue-sonner/style.css'
@@ -37,6 +35,8 @@ import '@fontsource/gugi'
 import '@fontsource/kiwi-maru'
 import '@fontsource/m-plus-rounded-1c'
 import '@fontsource/sniglet'
+// KaTeX CSS for math rendering
+import '../../../../node_modules/.pnpm/katex@0.16.27/node_modules/katex/dist/katex.min.css'
 
 const pinia = createPinia()
 

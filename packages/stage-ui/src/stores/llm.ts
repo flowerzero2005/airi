@@ -25,7 +25,7 @@ export interface StreamOptions {
   tools?: Tool[] | (() => Promise<Tool[] | undefined>)
 }
 
-// TODO: proper format for other error messages.
+// 深度清理消息对象，确保可以被 structuredClone
 function sanitizeMessages(messages: unknown[]): Message[] {
   return messages.map((m: any) => {
     if (m && m.role === 'error') {
@@ -34,7 +34,18 @@ function sanitizeMessages(messages: unknown[]): Message[] {
         content: `User encountered error: ${String(m.content ?? '')}`,
       } as Message
     }
-    return m as Message
+
+    // 通过 JSON 序列化来移除不可克隆的属性（函数、循环引用等）
+    try {
+      return JSON.parse(JSON.stringify(m)) as Message
+    }
+    catch {
+      // 如果 JSON 序列化失败，返回最基本的消息结构
+      return {
+        role: m?.role || 'user',
+        content: String(m?.content || ''),
+      } as Message
+    }
   })
 }
 
@@ -96,20 +107,14 @@ async function streamFrom(model: string, chatProvider: ChatProvider, messages: M
       }
     }
 
-    try {
-      streamText({
-        ...chatConfig,
-        maxSteps: 10,
-        messages: sanitized,
-        headers,
-        // TODO: we need Automatic tools discovery
-        tools,
-        onEvent,
-      })
-    }
-    catch (err) {
-      rejectOnce(err)
-    }
+    streamText({
+      ...chatConfig,
+      maxSteps: 10,
+      messages: sanitized,
+      headers,
+      tools,
+      onEvent,
+    })
   })
 }
 

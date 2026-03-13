@@ -64,7 +64,7 @@ export async function extractMemoryFromConversation(
     const finalConfig = {
       ...chatConfig,
       ...providerConfig,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user' as const, content: prompt }],
     }
 
     const response = await generateText(finalConfig)
@@ -86,6 +86,7 @@ export async function extractMemoryFromConversation(
     return result.shouldRemember ? result : null
   }
   catch (error) {
+    const jsonText = ''
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[MemoryExtractor] Failed to extract memory:', {
       error: errorMessage,

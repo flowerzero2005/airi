@@ -3,9 +3,7 @@ import { Alert } from '@proj-airi/stage-ui/components'
 import { useSpeechPlaybackSettingsStore } from '@proj-airi/stage-ui/stores/settings/speech-playback'
 import { FieldCheckbox, FieldRange } from '@proj-airi/ui'
 import { storeToRefs } from 'pinia'
-import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
 const speechPlaybackSettings = useSpeechPlaybackSettingsStore()
 const { settings } = storeToRefs(speechPlaybackSettings)
 </script>

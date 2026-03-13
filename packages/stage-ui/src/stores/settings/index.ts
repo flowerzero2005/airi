@@ -11,6 +11,7 @@ export * from './audio-device'
 export * from './controls-island'
 export * from './general'
 export * from './live2d'
+export * from './speech-output'
 export * from './stage-model'
 export * from './theme'
 // Export constants

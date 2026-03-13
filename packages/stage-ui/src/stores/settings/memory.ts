@@ -135,7 +135,6 @@ export const useMemorySettingsStore = defineStore('memory-settings', () => {
         if (data.customKeywords) {
           customKeywords.value = data.customKeywords
         }
-        console.log('[Memory Settings] Loaded from storage')
       }
     }
     catch (error) {
@@ -157,7 +156,6 @@ export const useMemorySettingsStore = defineStore('memory-settings', () => {
         customKeywords: customKeywords.value,
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      console.log('[Memory Settings] Saved to storage')
     }
     catch (error) {
       console.error('[Memory Settings] Failed to save to storage:', error)

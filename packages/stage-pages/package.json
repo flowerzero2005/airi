@@ -36,6 +36,7 @@
     "@vueuse/shared": "^14.2.1",
     "@xsai-ext/providers": "catalog:",
     "@xsai/generate-speech": "catalog:",
+    "@xsai/generate-text": "catalog:",
     "@xsai/stream-transcription": "0.4.0-beta.8",
     "animejs": "^4.3.6",
     "dompurify": "^3.3.1",

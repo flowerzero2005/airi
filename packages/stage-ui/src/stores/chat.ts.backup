@@ -2,7 +2,7 @@ import type { WebSocketEventInputs } from '@proj-airi/server-sdk'
 import type { ChatProvider } from '@xsai-ext/providers/utils'
 import type { CommonContentPart, Message, ToolMessage } from '@xsai/shared-chat'
 
-import type { ChatAssistantMessage, ChatHistoryItem, ChatSlices, ChatStreamEventContext, StreamingAssistantMessage } from '../types/chat'
+import type { ChatAssistantMessage, ChatSlices, ChatStreamEventContext, StreamingAssistantMessage } from '../types/chat'
 import type { StreamEvent, StreamOptions } from './llm'
 
 import { createQueue } from '@proj-airi/stream-kit'
@@ -11,12 +11,12 @@ import { defineStore, storeToRefs } from 'pinia'
 import { ref, toRaw } from 'vue'
 
 import { useAnalytics } from '../composables'
-import { autoInsertSegmentMarkers, removeSpecialMarkers } from '../composables/auto-segment-markers'
 import { useLlmmarkerParser } from '../composables/llm-marker-parser'
 import { categorizeResponse, createStreamingCategorizer } from '../composables/response-categoriser'
+import { segmentBySemantics } from '../composables/semantic-segmentation'
 import { createDatetimeContext, createNotebookMemoryContext } from './chat/context-providers'
-import { useChatContextStore } from './chat/context-store'
 import { createConversationInitContext } from './chat/conversation-initializer'
+import { useChatContextStore } from './chat/context-store'
 import { createChatHooks } from './chat/hooks'
 import { useChatSessionStore } from './chat/session-store'
 import { useChatStreamStore } from './chat/stream-store'
@@ -293,8 +293,9 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
       let lastCharWasSentenceEnd = false
       const sentenceEndMarkers = ['。', '！', '？', '.', '!', '?']
 
-      // 语义分段功能：检测 <|SEGMENT|> 标记并创建新气泡
-      let rawBuffer = '' // 原始文本缓冲区（包含所有标记）
+      // 智能语义分段功能：累积文本并按语义分段输出
+      let accumulatedText = '' // 累积的文本
+      let lastSegmentCount = 0 // 上次处理的分段数量
 
       const parser = useLlmmarkerParser({
         onLiteral: async (literal) => {
@@ -303,49 +304,117 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
 
           categorizer.consume(literal)
 
-          // 累积原始文本（用于后续分段处理）
-          rawBuffer += literal
-
-          const memoryAdvancedSettings = useMemoryAdvancedSettingsStore()
-
-          // 如果开启了语义分段，不在流式阶段输出，等 onEnd 统一处理
-          if (memoryAdvancedSettings?.settings?.enableSemanticSegmentation) {
-            // 什么都不做，等待 onEnd 处理
-            return
-          }
-
-          // 未开启语义分段，正常流式输出
           const speechOnly = categorizer.filterToSpeech(literal, streamPosition)
           streamPosition += literal.length
 
           if (speechOnly.trim()) {
             await hooks.emitTokenLiteralHooks(speechOnly, streamingMessageContext)
 
-            buildingMessage.content += speechOnly
-            const lastSlice = buildingMessage.slices.at(-1)
-            if (lastSlice?.type === 'text') {
-              lastSlice.text += speechOnly
-            }
-            else {
-              buildingMessage.slices.push({
-                type: 'text',
-                text: speechOnly,
-              })
-            }
-            updateUI()
+            // 智能语义分段功能：根据语义分段控制输出节奏
+            // 使用 try-catch 确保功能失败时不影响原有流式输出
+            try {
+              const memoryAdvancedSettings = useMemoryAdvancedSettingsStore()
 
-            // 如果开启了自然输出节奏，使用句子停顿逻辑
-            if (memoryAdvancedSettings?.settings?.enableNaturalOutput) {
-              const delay = memoryAdvancedSettings.settings.naturalOutputDelay || 300
-              const trimmedSpeech = speechOnly.trim()
-              const endsWithSentenceMarker = trimmedSpeech.length > 0
-                && sentenceEndMarkers.some(marker => trimmedSpeech.endsWith(marker))
+              // 检查是否开启语义分段功能
+              if (memoryAdvancedSettings?.settings?.enableSemanticSegmentation) {
+                // 累积文本
+                accumulatedText += speechOnly
 
-              if (endsWithSentenceMarker && !lastCharWasSentenceEnd) {
-                await new Promise(resolve => setTimeout(resolve, delay))
+                // 尝试进行语义分段
+                const segments = segmentBySemantics(accumulatedText)
+
+                // 检查是否有新的完整分段
+                const completedSegmentCount = segments.length - 1 // 最后一个是未完成的
+
+                if (completedSegmentCount > lastSegmentCount) {
+                  // 有新的完整分段
+                  for (let i = lastSegmentCount; i < completedSegmentCount; i++) {
+                    const segment = segments[i]
+
+                    // 输出这个分段到当前气泡
+                    buildingMessage.content += segment
+                    const lastSlice = buildingMessage.slices.at(-1)
+                    if (lastSlice?.type === 'text') {
+                      lastSlice.text += segment
+                    }
+                    else {
+                      buildingMessage.slices.push({
+                        type: 'text',
+                        text: segment,
+                      })
+                    }
+                    updateUI()
+
+                    // 完成当前气泡，创建新气泡
+                    await createNewSegment()
+
+                    // 在气泡之间添加延迟
+                    const delay = memoryAdvancedSettings.settings.naturalOutputDelay || 300
+                    await new Promise(resolve => setTimeout(resolve, delay))
+                  }
+
+                  lastSegmentCount = completedSegmentCount
+                }
+
+                // 输出未完成的分段（最后一个）
+                const lastSegment = segments[segments.length - 1]
+                // 直接替换当前气泡的内容为最后一个未完成分段
+                buildingMessage.content = lastSegment
+                buildingMessage.slices = [{
+                  type: 'text',
+                  text: lastSegment,
+                }]
+                updateUI()
               }
+              else {
+                // 未开启语义分段，使用原有逻辑
+                buildingMessage.content += speechOnly
+                const lastSlice = buildingMessage.slices.at(-1)
+                if (lastSlice?.type === 'text') {
+                  lastSlice.text += speechOnly
+                }
+                else {
+                  buildingMessage.slices.push({
+                    type: 'text',
+                    text: speechOnly,
+                  })
+                }
+                updateUI()
 
-              lastCharWasSentenceEnd = endsWithSentenceMarker
+                // 如果开启了自然输出节奏，使用原有的句子停顿逻辑
+                if (memoryAdvancedSettings?.settings?.enableNaturalOutput) {
+                  const delay = memoryAdvancedSettings.settings.naturalOutputDelay || 300
+                  // 检测当前文本是否以句子结束符结尾
+                  const trimmedSpeech = speechOnly.trim()
+                  const endsWithSentenceMarker = trimmedSpeech.length > 0
+                    && sentenceEndMarkers.some(marker => trimmedSpeech.endsWith(marker))
+
+                  // 如果检测到句子结束，且上一个字符不是句子结束符（避免连续延迟）
+                  if (endsWithSentenceMarker && !lastCharWasSentenceEnd) {
+                    await new Promise(resolve => setTimeout(resolve, delay))
+                  }
+
+                  lastCharWasSentenceEnd = endsWithSentenceMarker
+                }
+              }
+            }
+            catch (error) {
+              // 静默失败，不影响流式输出
+              console.warn('[Chat] Natural output rhythm feature error:', error)
+
+              // 出错时使用原有逻辑
+              buildingMessage.content += speechOnly
+              const lastSlice = buildingMessage.slices.at(-1)
+              if (lastSlice?.type === 'text') {
+                lastSlice.text += speechOnly
+              }
+              else {
+                buildingMessage.slices.push({
+                  type: 'text',
+                  text: speechOnly,
+                })
+              }
+              updateUI()
             }
           }
         },
@@ -359,128 +428,8 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
           if (isStaleGeneration())
             return
 
-          const memoryAdvancedSettings = useMemoryAdvancedSettingsStore()
-
-          // 如果开启了语义分段，在这里进行分段处理
-          if (memoryAdvancedSettings?.settings?.enableSemanticSegmentation) {
-            // 检查 AI 是否输出了 SEGMENT 标记
-            const hasMarkers = fullText.includes('<|SEGMENT|>')
-
-            let textWithMarkers = fullText
-
-            // 如果 AI 没有输出标记，自动插入
-            if (!hasMarkers) {
-              textWithMarkers = autoInsertSegmentMarkers(fullText)
-            }
-
-            // 按标记分割文本
-            const segments = textWithMarkers.split('<|SEGMENT|>').map(s => s.trim()).filter(s => s)
-
-            // 为每个段落创建独立的气泡
-            await new Promise<void>((resolve) => {
-              let currentSegmentIndex = 0
-              const isTypingComplete = false // 标记当前气泡打字是否完成
-
-              const displayNextSegment = () => {
-                if (currentSegmentIndex >= segments.length) {
-                  // 所有段落显示完毕，清空状态并标记完成
-                  streamingMessage.value = null
-                  resolve()
-                  return
-                }
-
-                const segment = segments[currentSegmentIndex]
-                currentSegmentIndex++
-
-                if (!segment || !segment.trim()) {
-                  // 跳过空段落，继续下一个
-                  displayNextSegment()
-                  return
-                }
-
-                // 移除特殊标记（ACT、DELAY 等）
-                const cleanedSegment = removeSpecialMarkers(segment)
-
-                if (!cleanedSegment.trim()) {
-                  displayNextSegment()
-                  return
-                }
-
-                // 创建消息对象（完整文本）
-                const segmentMessage: StreamingAssistantMessage = {
-                  role: 'assistant',
-                  content: cleanedSegment,
-                  slices: [{
-                    type: 'text',
-                    text: cleanedSegment,
-                  }],
-                  tool_results: [],
-                  createdAt: Date.now(),
-                  id: nanoid(),
-                  metadata: {
-                    typingCompleted: false, // 标记为未完成，触发打字机效果
-                  },
-                }
-
-                // 添加消息到列表
-                if (sessionId === activeSessionId.value) {
-                  const currentMessages = chatSession.getSessionMessages(sessionId)
-                  chatSession.messages = [...currentMessages, segmentMessage]
-                }
-                else {
-                  const sessionMessages = chatSession.getSessionMessages(sessionId)
-                  sessionMessages.push(segmentMessage)
-                }
-
-                // 计算打字机效果时间（用于延迟下一个气泡）
-                const typingSpeed = memoryAdvancedSettings.settings.typingSpeed || 30
-                const typingDuration = cleanedSegment.length * typingSpeed
-
-                // 等待打字机效果完成
-                setTimeout(() => {
-                  // 标记消息为已完成
-                  if (segmentMessage.metadata) {
-                    segmentMessage.metadata.typingCompleted = true
-                  }
-
-                  // 如果还有下一个段落，等待气泡间延迟后继续
-                  if (currentSegmentIndex < segments.length) {
-                    let bubbleDelay: number
-
-                    // 根据设置决定气泡间延迟时间
-                    if (memoryAdvancedSettings.settings.enableAdaptiveBubbleDelay) {
-                      // 启用自适应延迟：根据下一个气泡的文字数量决定延迟时间
-                      const nextSegment = segments[currentSegmentIndex]
-                      const nextCleanedSegment = removeSpecialMarkers(nextSegment || '')
-                      const textLength = nextCleanedSegment.length
-
-                      // 计算延迟：基础1.5秒 + 每15字增加0.5秒，最多5秒
-                      bubbleDelay = Math.min(5000, 1500 + Math.floor(textLength / 15) * 500)
-                    }
-                    else {
-                      // 使用固定延迟
-                      bubbleDelay = memoryAdvancedSettings.settings.bubbleDelayMs || 2000
-                    }
-
-                    setTimeout(displayNextSegment, bubbleDelay)
-                  }
-                  else {
-                    // 最后一个段落，清空状态并完成
-                    streamingMessage.value = null
-                    resolve()
-                  }
-                }, typingDuration)
-              }
-
-              // 开始显示第一个段落
-              displayNextSegment()
-            })
-
-            return
-          }
-
-          // 未开启语义分段，正常处理
           const finalCategorization = categorizeResponse(fullText, activeProvider.value)
+
           buildingMessage.categorization = {
             speech: finalCategorization.speech,
             reasoning: finalCategorization.reasoning,
@@ -557,19 +506,8 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
 
       streamingMessageContext.composedMessage = newMessages as Message[]
 
-      try {
-        await hooks.emitAfterMessageComposedHooks(sendingMessage, streamingMessageContext)
-      }
-      catch (error) {
-        console.error('[Chat] emitAfterMessageComposedHooks failed, but continuing:', error)
-      }
-
-      try {
-        await hooks.emitBeforeSendHooks(sendingMessage, streamingMessageContext)
-      }
-      catch (error) {
-        console.error('[Chat] emitBeforeSendHooks failed, but continuing:', error)
-      }
+      await hooks.emitAfterMessageComposedHooks(sendingMessage, streamingMessageContext)
+      await hooks.emitBeforeSendHooks(sendingMessage, streamingMessageContext)
 
       let fullText = ''
       const headers = (options.providerConfig?.headers || {}) as Record<string, string>
@@ -673,7 +611,7 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
     // 立即在界面显示用户消息（不等待合并）
     const userMessageId = nanoid()
     const userMessageCreatedAt = Date.now()
-    const userMessage: ChatHistoryItem = {
+    const userMessage: ChatUserMessage = {
       role: 'user',
       content: sendingMessage,
       createdAt: userMessageCreatedAt,

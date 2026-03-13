@@ -32,6 +32,7 @@
     "./stores/analytics": "./src/stores/analytics/index.ts",
     "./stores/character": "./src/stores/character/index.ts",
     "./stores/character/*": "./src/stores/character/*.ts",
+    "./stores/chat/context-providers": "./src/stores/chat/context-providers/index.ts",
     "./stores/settings": "./src/stores/settings/index.ts",
     "./stores/settings/*": "./src/stores/settings/*.ts",
     "./stores/*": "./src/stores/*.ts",

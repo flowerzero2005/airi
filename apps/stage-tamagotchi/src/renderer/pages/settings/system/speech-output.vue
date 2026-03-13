@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { SpeechOutputMode } from '@proj-rin/stage-ui/stores/settings'
+import type { SpeechOutputMode } from '@proj-airi/stage-ui/stores/settings'
 
-import { useSettingsSpeechOutput } from '@proj-rin/stage-ui/stores/settings'
-import { FieldRange, Radio } from '@proj-rin/ui'
+import { useSettingsSpeechOutput } from '@proj-airi/stage-ui/stores/settings'
+import { FieldRange, Radio } from '@proj-airi/ui'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 

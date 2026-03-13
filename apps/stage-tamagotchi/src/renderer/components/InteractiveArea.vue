@@ -23,7 +23,7 @@ const chatOrchestrator = useChatOrchestratorStore()
 const chatSession = useChatSessionStore()
 const chatStream = useChatStreamStore()
 const { cleanupMessages } = useChatMaintenanceStore()
-const { ingest, onAfterMessageComposed, discoverToolsCompatibility } = chatOrchestrator
+const { ingest, onAfterMessageComposed, discoverToolsCompatibility, resetMergeTimer } = chatOrchestrator
 const { messages } = storeToRefs(chatSession)
 const { streamingMessage } = storeToRefs(chatStream)
 const { sending } = storeToRefs(chatOrchestrator)
@@ -38,6 +38,10 @@ let memoryManager: any = null
 let onChatTurnComplete: any = null
 let memoryCleanup: (() => void) | null = null
 
+// Track if memory system is initializing to prevent duplicate initialization
+let isInitializing = false
+let isInitialized = false
+
 // Get tools array
 async function getTools() {
   const baseTools = await widgetsTools()
@@ -46,9 +50,14 @@ async function getTools() {
 
 // Safely initialize memory system
 async function initializeMemorySystem() {
-  try {
-    console.log('[InteractiveArea] Starting memory system initialization...')
+  // Prevent duplicate initialization
+  if (isInitializing || isInitialized) {
+    return
+  }
 
+  isInitializing = true
+
+  try {
     // Dynamically import memory modules
     const { memoryTool: tool } = await import('../stores/tools/builtin/memory')
     const { useMemoryManager } = await import('@proj-airi/stage-ui/stores/chat/memory-manager')
@@ -59,9 +68,7 @@ async function initializeMemorySystem() {
     // Initialize notebook store first
     const notebookStore = useCharacterNotebookStore()
     if (!notebookStore.isLoaded) {
-      console.log('[InteractiveArea] Loading notebook store...')
       await notebookStore.loadFromStorage()
-      console.log('[InteractiveArea] Notebook store loaded, entries:', notebookStore.entries.length)
     }
 
     memoryTool = tool
@@ -71,7 +78,6 @@ async function initializeMemorySystem() {
     // Inject memory system prompt
     const contextStore = useChatContextStore()
     contextStore.ingestContextMessage(createMemorySystemPrompt())
-    console.log('[InteractiveArea] Memory system prompt injected')
 
     // Register memory extraction hook
     const hookCleanup = onChatTurnComplete(async (chat: any, context: any) => {
@@ -105,10 +111,13 @@ async function initializeMemorySystem() {
       )
     }
 
-    console.log('[InteractiveArea] Memory system initialization complete')
+    isInitialized = true
   }
   catch (error) {
     console.error('[InteractiveArea] Failed to initialize memory system:', error)
+  }
+  finally {
+    isInitializing = false
   }
 }
 
@@ -208,7 +217,11 @@ onMounted(() => {
 onUnmounted(() => {
   if (memoryCleanup) {
     memoryCleanup()
+    memoryCleanup = null
   }
+  // Reset initialization flags
+  isInitializing = false
+  isInitialized = false
 })
 
 const historyMessages = computed(() => messages.value as unknown as ChatHistoryItem[])
@@ -258,6 +271,7 @@ const historyMessages = computed(() => messages.value as unknown as ChatHistoryI
       @compositionend="isComposing = false"
       @keydown.enter.exact.prevent="handleSend"
       @paste-file="handleFilePaste"
+      @input="resetMergeTimer"
     />
   </div>
 </template>

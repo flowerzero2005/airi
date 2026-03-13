@@ -27,6 +27,79 @@ pages:
           use-window-mouse:
             title: useWindowMouse Tool
             description: Test the Electron window cursor position
+    memory-advanced:
+      title: Memory Advanced Settings
+      description: Configure advanced features of the memory system
+      info:
+        title: Advanced Memory Features
+        description: These features are disabled by default. Enable them to enhance AI's memory capabilities and conversation experience. All features are carefully designed to ensure backward compatibility.
+      isolation:
+        title: Memory Isolation
+        multi-user:
+          label: Enable Multi-User Recognition
+          description: Automatically identify different users by device and maintain separate memory spaces for each user
+          warning: First-time activation will automatically migrate existing data to the new user, original data will not be lost
+      semantic:
+        title: Semantic Understanding
+        search:
+          label: Enable Semantic Search
+          description: Use knowledge graph to expand keywords and improve memory recall accuracy and coverage
+        value-judgment:
+          label: Smart Value Judgment
+          description: AI re-evaluates memory value to automatically filter temporary and low-value information
+      natural:
+        title: Natural Conversation
+        conversation-init:
+          label: Conversation Initialization
+          description: Generate personalized greetings based on memories to make each conversation more natural
+        output:
+          label: Natural Output Rhythm
+          description: Add pauses between sentences to simulate real thinking process
+        output-delay:
+          label: Pause Duration
+          description: Time to pause between sentences (milliseconds)
+        semantic-segmentation:
+          label: Enable Semantic Segmentation
+          description: Split responses into semantic chunks rather than simple sentence breaks
+          badge: Recommended
+        bubble-delay:
+          label: Bubble Delay
+          description: Delay time between multiple bubbles (milliseconds)
+        adaptive-bubble-delay:
+          label: Adaptive Bubble Delay
+          description: Automatically adjust delay time based on the text length of the next bubble (disables fixed delay when enabled)
+      message:
+        title: Message Processing
+        merging:
+          label: Enable Message Merging
+          description: Automatically merge consecutive messages before processing
+          badge: Recommended
+        merge-delay:
+          label: Merge Wait Time
+          description: How long to wait before merging messages (milliseconds)
+      proactive:
+        title: Proactive Topics
+        experimental: Experimental
+        enable:
+          label: Enable Proactive Topics
+          description: AI will proactively initiate conversations at appropriate times to remind tasks or check in
+        random-interval:
+          label: Enable Random Interval
+          description: Let AI speak at random times for more natural interactions
+        interval:
+          label: Check Interval
+          description: How often to check for pending topics (minutes)
+        min-interval:
+          label: Minimum Interval
+          description: Minimum value for random interval (minutes)
+        max-interval:
+          label: Maximum Interval
+          description: Maximum value for random interval (minutes)
+        time-range:
+          label: Allowed Time Range
+          description: Time range when AI can proactively initiate conversations (24-hour format)
+          unit: hour
+      reset: Reset to Defaults
 devtools:
   title: Developer
   pages:

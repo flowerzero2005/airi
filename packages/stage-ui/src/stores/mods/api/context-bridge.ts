@@ -19,6 +19,18 @@ import { useConsciousnessStore } from '../../modules/consciousness'
 import { useProvidersStore } from '../../providers'
 import { useModsServerChannelStore } from './channel-server'
 
+/**
+ * 创建一个可安全克隆的 context 副本
+ * BroadcastChannel 只需要同步状态，不需要完整的 context 对象
+ */
+function createMinimalContext(context: any): any {
+  return {
+    messageId: context.message?.id || '',
+    messageRole: context.message?.role || 'user',
+    timestamp: Date.now(),
+  }
+}
+
 export const useContextBridgeStore = defineStore('mods:api:context-bridge', () => {
   const mutex = new Mutex()
 
@@ -149,49 +161,88 @@ export const useContextBridgeStore = defineStore('mods:api:context-bridge', () =
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'before-compose', message, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'before-compose',
+            message,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onAfterMessageComposed(async (message, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'after-compose', message, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'after-compose',
+            message,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onBeforeSend(async (message, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'before-send', message, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'before-send',
+            message,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onAfterSend(async (message, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'after-send', message, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'after-send',
+            message,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onTokenLiteral(async (literal, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'token-literal', literal, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'token-literal',
+            literal,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onTokenSpecial(async (special, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'token-special', special, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'token-special',
+            special,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onStreamEnd(async (context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'stream-end', sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'stream-end',
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
         chatOrchestrator.onAssistantResponseEnd(async (message, context) => {
           if (isProcessingRemoteStream)
             return
 
-          broadcastStreamEvent({ type: 'assistant-end', message, sessionId: chatSession.activeSessionId, context: structuredClone(toRaw(context)) })
+          broadcastStreamEvent({
+            type: 'assistant-end',
+            message,
+            sessionId: chatSession.activeSessionId,
+            context: createMinimalContext(context),
+          })
         }),
 
         chatOrchestrator.onAssistantMessage(async (message, _messageText, context) => {

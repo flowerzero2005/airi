@@ -72,6 +72,21 @@ if (isLinux) {
   }
 }
 
+// Ensure WebGL is enabled on all platforms
+// This fixes the "WebGL unsupported" error in Pixi.js
+app.commandLine.appendSwitch('ignore-gpu-blocklist')
+app.commandLine.appendSwitch('disable-gpu-sandbox')
+app.commandLine.appendSwitch('enable-webgl')
+app.commandLine.appendSwitch('enable-accelerated-2d-canvas')
+app.commandLine.appendSwitch('enable-gpu-rasterization')
+app.commandLine.appendSwitch('disable-software-rasterizer')
+app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')
+
+// Force GPU process
+app.disableHardwareAcceleration = () => {
+  console.warn('[GPU] Attempted to disable hardware acceleration - ignoring')
+}
+
 app.dock?.setIcon(icon)
 electronApp.setAppUserModelId('ai.moeru.airi')
 
@@ -79,6 +94,42 @@ initScreenCaptureForMain()
 
 app.whenReady().then(async () => {
   injeca.setLogger(createLoggLogger(useLogg('injeca').useGlobalConfig()))
+
+  // 设置 Content Security Policy
+  // 在开发环境中需要允许 unsafe-eval 用于 HMR 和开发工具
+  // 在生产环境中使用更严格的策略
+  const isDev = !app.isPackaged
+  const cspDirectives = [
+    'default-src \'self\'',
+    `script-src 'self' 'unsafe-inline'${isDev ? ' \'unsafe-eval\'' : ''}`,
+    'style-src \'self\' \'unsafe-inline\'',
+    'img-src \'self\' data: blob: https:',
+    'font-src \'self\' data:',
+    'connect-src \'self\' ws: wss: http: https:',
+    'media-src \'self\' blob:',
+    'worker-src \'self\' blob:',
+  ].join('; ')
+
+  app.session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [cspDirectives],
+      },
+    })
+  })
+
+  // Log GPU information for debugging
+  try {
+    const gpuInfo = app.getGPUFeatureStatus()
+    log.log('GPU Feature Status:', JSON.stringify(gpuInfo, null, 2))
+    app.getGPUInfo('complete').then((info) => {
+      log.log('GPU Info:', JSON.stringify(info, null, 2))
+    })
+  }
+  catch (err) {
+    log.withError(err as Error).error('Failed to get GPU info')
+  }
 
   const appConfig = injeca.provide('configs:app', () => createGlobalAppConfig())
   const electronApp = injeca.provide('host:electron:app', () => app)

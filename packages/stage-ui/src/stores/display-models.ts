@@ -113,7 +113,7 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
         id: preset.id,
         name: preset.name,
         format: preset.format,
-        url: preset.url,
+        url: preset.type === 'url' ? preset.url : undefined,
       })
     }
     else {
