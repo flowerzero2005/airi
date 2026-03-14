@@ -7,7 +7,7 @@ import messages from '@proj-airi/i18n/locales'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { Format, LogLevel, setGlobalFormat, setGlobalLogLevel, useLogg } from '@guiiai/logg'
 import { initScreenCaptureForMain } from '@proj-airi/electron-screen-capture/main'
-import { app, ipcMain } from 'electron'
+import { app, ipcMain, session } from 'electron'
 import { noop } from 'es-toolkit'
 import { createLoggLogger, injeca } from 'injeca'
 import { isLinux } from 'std-env'
@@ -54,10 +54,12 @@ const log = useLogg('main').useGlobalConfig()
 //
 // https://github.com/electron/electron/issues/41763#issuecomment-2051725363
 // https://github.com/electron/electron/issues/41763#issuecomment-3143338995
+
+// Collect all feature flags to enable
+const enabledFeatures: string[] = []
+
 if (isLinux) {
-  app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer')
-  app.commandLine.appendSwitch('enable-unsafe-webgpu')
-  app.commandLine.appendSwitch('enable-features', 'Vulkan')
+  enabledFeatures.push('SharedArrayBuffer', 'Vulkan', 'VaapiVideoDecoder')
 
   // NOTICE: we need UseOzonePlatform, WaylandWindowDecorations for working on Wayland.
   // Partially related to https://github.com/electron/electron/issues/41551, since X11 is deprecating now,
@@ -65,10 +67,7 @@ if (isLinux) {
   // Fixes: https://github.com/moeru-ai/airi/issues/757
   // Ref: https://github.com/mmaura/poe2linuxcompanion/blob/90664607a147ea5ccea28df6139bd95fb0ebab0e/electron/main/index.ts#L28-L46
   if (env.XDG_SESSION_TYPE === 'wayland') {
-    app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal')
-
-    app.commandLine.appendSwitch('enable-features', 'UseOzonePlatform')
-    app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations')
+    enabledFeatures.push('GlobalShortcutsPortal', 'UseOzonePlatform', 'WaylandWindowDecorations')
   }
 }
 
@@ -80,7 +79,16 @@ app.commandLine.appendSwitch('enable-webgl')
 app.commandLine.appendSwitch('enable-accelerated-2d-canvas')
 app.commandLine.appendSwitch('enable-gpu-rasterization')
 app.commandLine.appendSwitch('disable-software-rasterizer')
-app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')
+
+// Apply all feature flags at once (multiple appendSwitch calls with same key will override)
+if (enabledFeatures.length > 0) {
+  app.commandLine.appendSwitch('enable-features', enabledFeatures.join(','))
+}
+
+// Enable unsafe WebGPU for Linux
+if (isLinux) {
+  app.commandLine.appendSwitch('enable-unsafe-webgpu')
+}
 
 // Force GPU process
 app.disableHardwareAcceleration = () => {
@@ -101,16 +109,17 @@ app.whenReady().then(async () => {
   const isDev = !app.isPackaged
   const cspDirectives = [
     'default-src \'self\'',
-    `script-src 'self' 'unsafe-inline'${isDev ? ' \'unsafe-eval\'' : ''}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? ' \'unsafe-eval\'' : ''} https://cdn.jsdelivr.net https://us-assets.i.posthog.com`,
+    `script-src-elem 'self' 'unsafe-inline'${isDev ? ' \'unsafe-eval\'' : ''} https://cdn.jsdelivr.net https://us-assets.i.posthog.com`,
     'style-src \'self\' \'unsafe-inline\'',
     'img-src \'self\' data: blob: https:',
-    'font-src \'self\' data:',
-    'connect-src \'self\' ws: wss: http: https:',
+    'font-src \'self\' data: https://fonts.gstatic.com',
+    'connect-src \'self\' ws: wss: http: https: data: blob:',
     'media-src \'self\' blob:',
     'worker-src \'self\' blob:',
   ].join('; ')
 
-  app.session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
