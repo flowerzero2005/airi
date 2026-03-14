@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChatAssistantMessage, ChatSlices, ChatSlicesText } from '../../../types/chat'
+import type { ChatSlices, ChatSlicesText, StreamingAssistantMessage } from '../../../types/chat'
 
 import { computed, ref, watch } from 'vue'
 
@@ -10,7 +10,7 @@ import { useMemoryAdvancedSettingsStore } from '../../../stores/settings/memory-
 import { MarkdownRenderer } from '../../markdown'
 
 const props = withDefaults(defineProps<{
-  message: ChatAssistantMessage
+  message: StreamingAssistantMessage
   label: string
   showPlaceholder?: boolean
   variant?: 'desktop' | 'mobile'

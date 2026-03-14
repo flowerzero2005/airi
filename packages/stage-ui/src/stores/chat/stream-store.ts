@@ -7,13 +7,16 @@ import { useChatSessionStore } from './session-store'
 
 export const useChatStreamStore = defineStore('chat-stream', () => {
   const chatSession = useChatSessionStore()
-  const streamingMessage = ref<StreamingAssistantMessage>({ role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() })
+  const streamingMessage = ref<StreamingAssistantMessage | null>({ role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() })
 
   function beginStream() {
     streamingMessage.value = { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() }
   }
 
   function appendStreamLiteral(literal: string) {
+    if (!streamingMessage.value)
+      return
+
     streamingMessage.value.content += literal
 
     const lastSlice = streamingMessage.value.slices.at(-1)
@@ -29,6 +32,9 @@ export const useChatStreamStore = defineStore('chat-stream', () => {
   }
 
   function finalizeStream(fullText?: string) {
+    if (!streamingMessage.value)
+      return
+
     const sessionId = chatSession.activeSessionId
     const sessionMessagesForSend = chatSession.getSessionMessages(sessionId)
     if (streamingMessage.value.slices.length > 0)

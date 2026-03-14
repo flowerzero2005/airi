@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChatAssistantMessage, ChatHistoryItem, ContextMessage } from '../../../types/chat'
+import type { ChatHistoryItem, StreamingAssistantMessage } from '../../../types/chat'
 
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -10,7 +10,7 @@ import ChatUserItem from './user-item.vue'
 
 const props = withDefaults(defineProps<{
   messages: ChatHistoryItem[]
-  streamingMessage?: ChatAssistantMessage & { createdAt?: number }
+  streamingMessage?: StreamingAssistantMessage | null
   sending?: boolean
   assistantLabel?: string
   userLabel?: string
@@ -45,7 +45,7 @@ watch([() => props.messages, () => props.streamingMessage], scrollToBottom, { de
 watch(() => props.sending, scrollToBottom, { flush: 'post' })
 onMounted(scrollToBottom)
 
-const streaming = computed<ChatAssistantMessage & { context?: ContextMessage } & { createdAt?: number }>(() => props.streamingMessage ?? { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() })
+const streaming = computed<StreamingAssistantMessage>(() => props.streamingMessage ?? { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() })
 const showStreamingPlaceholder = computed(() => (streaming.value.slices?.length ?? 0) === 0 && !streaming.value.content)
 const streamingTs = computed(() => streaming.value?.createdAt)
 function shouldShowPlaceholder(message: ChatHistoryItem) {

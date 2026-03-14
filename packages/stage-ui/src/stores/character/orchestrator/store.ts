@@ -176,7 +176,7 @@ export const useCharacterOrchestratorStore = defineStore('character-orchestrator
       data: {
         id: `proactive-${now}`,
         eventId: `proactive-${now}`,
-        kind: 'chat',
+        kind: 'ping',
         urgency: 'later',
         headline: 'Time to initiate a proactive conversation',
         note: [

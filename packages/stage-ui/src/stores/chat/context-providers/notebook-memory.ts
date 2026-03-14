@@ -80,7 +80,7 @@ export async function createNotebookMemoryContext(
   }
 
   // Format memories as context
-  const memoryLines = relevantMemories.map((memory, index) => {
+  const memoryLines = relevantMemories.map((memory) => {
     const tags = memory.tags?.join(', ') || ''
     const importance = memory.metadata?.importance as string | undefined
     const importanceIcon = importance === 'high' ? '⭐' : importance === 'medium' ? '📌' : '💡'

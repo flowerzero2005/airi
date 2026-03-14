@@ -211,39 +211,12 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
     const isForegroundSession = () => sessionId === activeSessionId.value
 
     // 语义分段：支持多个独立消息气泡
-    let buildingMessage: StreamingAssistantMessage = { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now(), id: nanoid() }
+    const buildingMessage: StreamingAssistantMessage = { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now(), id: nanoid() }
 
     const updateUI = () => {
       if (isForegroundSession()) {
         streamingMessage.value = JSON.parse(JSON.stringify(buildingMessage))
       }
-    }
-
-    const createNewSegment = async () => {
-      // 将当前消息添加到会话（深拷贝避免引用问题）
-      const sessionMessages = chatSession.getSessionMessages(sessionId)
-      const completedMessage = JSON.parse(JSON.stringify(buildingMessage))
-      sessionMessages.push(completedMessage)
-
-      // 清空流式消息显示
-      streamingMessage.value = null
-
-      // 立即更新 UI 显示新消息
-      if (sessionId === activeSessionId.value) {
-        chatSession.messages = [...sessionMessages]
-      }
-
-      // 创建新的消息段落
-      buildingMessage = {
-        role: 'assistant',
-        content: '',
-        slices: [],
-        tool_results: [],
-        createdAt: Date.now(),
-        id: nanoid(),
-      }
-
-      updateUI()
     }
 
     updateUI()
@@ -267,7 +240,6 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
         }
       }
 
-      const finalContent = contentParts.length > 1 ? contentParts : sendingMessage
       if (!streamingMessageContext.input) {
         streamingMessageContext.input = {
           type: 'input:text',
@@ -379,7 +351,6 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
             // 为每个段落创建独立的气泡
             await new Promise<void>((resolve) => {
               let currentSegmentIndex = 0
-              const isTypingComplete = false // 标记当前气泡打字是否完成
 
               const displayNextSegment = () => {
                 if (currentSegmentIndex >= segments.length) {
