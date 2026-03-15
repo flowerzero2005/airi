@@ -150,6 +150,7 @@ const displaySlices = computed<ChatSlices[]>(() => {
       }
       return slice
     })
+    .filter(slice => slice.type === 'text' && slice.text.trim().length > 0) // 过滤掉空文本
 })
 
 // 加载器显示逻辑
@@ -162,8 +163,42 @@ const hasOnlyToolCalls = computed(() => {
   }
   return slices.length > 0 && slices.every(s => s.type === 'tool-call' || s.type === 'tool-call-result')
 })
-const showLoader = computed(() => props.showPlaceholder && resolvedSlices.value.length === 0)
-const shouldHideMessage = computed(() => hasOnlyToolCalls.value && displaySlices.value.length === 0)
+
+// 修复：只在流式输出时显示加载器，历史消息不显示
+const showLoader = computed(() => {
+  // 如果是历史消息（超过5秒），不显示加载器
+  if (isHistoricalMessage.value) {
+    return false
+  }
+
+  // 原始逻辑：没有任何 slice 时显示加载器
+  if (props.showPlaceholder && resolvedSlices.value.length === 0) {
+    return true
+  }
+
+  // 新增逻辑：只有工具调用/结果，没有文本时，也显示加载器（仅限流式输出）
+  if (props.showPlaceholder && hasOnlyToolCalls.value) {
+    return true
+  }
+
+  return false
+})
+
+// 如果只有工具调用且是历史消息，隐藏整个消息气泡
+// 或者如果没有可显示的内容且不在加载状态，也隐藏
+const shouldHideMessage = computed(() => {
+  // 情况1：只有工具调用且是历史消息
+  if (hasOnlyToolCalls.value && isHistoricalMessage.value) {
+    return true
+  }
+
+  // 情况2：没有可显示的内容，且不在加载状态，且不是正在流式输出
+  if (displaySlices.value.length === 0 && !showLoader.value && !props.showPlaceholder) {
+    return true
+  }
+
+  return false
+})
 const containerClass = computed(() => props.variant === 'mobile' ? 'mr-0' : 'mr-12')
 const boxClasses = computed(() => [
   props.variant === 'mobile' ? 'px-2 py-2 text-sm bg-primary-50/90 dark:bg-primary-950/90' : 'px-3 py-3 bg-primary-50/80 dark:bg-primary-950/80',

@@ -59,8 +59,19 @@ export interface AiriCard extends Card {
 export const useAiriCardStore = defineStore('airi-card', () => {
   const { t } = useI18n()
 
+  const SYSTEM_PROMPT_VERSION = '1.2.0' // Increment when system prompt changes - Updated 2026-03-16: Multi-point reinforcement
+
   const cards = useLocalStorageManualReset<Map<string, AiriCard>>('airi-cards', new Map())
   const activeCardId = useLocalStorageManualReset<string>('airi-card-active-id', 'default')
+
+  // IMPORTANT: Check version immediately after loading from localStorage
+  // This ensures version updates work without manual localStorage clearing
+  const existingDefaultCard = cards.value.get('default')
+  if (existingDefaultCard && existingDefaultCard.version !== SYSTEM_PROMPT_VERSION) {
+    console.log('[AiriCard] Version mismatch detected on store init!')
+    console.log('[AiriCard] Old version:', existingDefaultCard.version, '→ New version:', SYSTEM_PROMPT_VERSION)
+    console.log('[AiriCard] Will update card in initialize()')
+  }
 
   const activeCard = computed(() => cards.value.get(activeCardId.value))
 
@@ -211,12 +222,14 @@ export const useAiriCardStore = defineStore('airi-card', () => {
   }
 
   function initialize() {
-    const SYSTEM_PROMPT_VERSION = '1.1.1' // Increment when system prompt changes
     const existingCard = cards.value.get('default')
 
     // Update default card if it doesn't exist or version is outdated
     if (!existingCard || existingCard.version !== SYSTEM_PROMPT_VERSION) {
       console.log('[AiriCard] Updating default card to version', SYSTEM_PROMPT_VERSION)
+      if (existingCard) {
+        console.log('[AiriCard] Old version:', existingCard.version, '→ New version:', SYSTEM_PROMPT_VERSION)
+      }
       const newCard = newAiriCard({
         name: 'ReLU',
         version: SYSTEM_PROMPT_VERSION,
@@ -234,6 +247,12 @@ export const useAiriCardStore = defineStore('airi-card', () => {
       const newCards = new Map(cards.value)
       newCards.set('default', newCard)
       cards.value = newCards
+
+      // Force save to localStorage immediately
+      console.log('[AiriCard] Forcing localStorage update')
+    }
+    else {
+      console.log('[AiriCard] Card version is up to date:', SYSTEM_PROMPT_VERSION)
     }
 
     if (!activeCardId.value)
