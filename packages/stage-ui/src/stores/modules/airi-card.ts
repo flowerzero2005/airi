@@ -80,12 +80,16 @@ export const useAiriCardStore = defineStore('airi-card', () => {
 
   const addCard = (card: AiriCard | Card | ccv3.CharacterCardV3) => {
     const newCardId = nanoid()
-    cards.value.set(newCardId, newAiriCard(card))
+    const newCards = new Map(cards.value)
+    newCards.set(newCardId, newAiriCard(card))
+    cards.value = newCards
     return newCardId
   }
 
   const removeCard = (id: string) => {
-    cards.value.delete(id)
+    const newCards = new Map(cards.value)
+    newCards.delete(id)
+    cards.value = newCards
   }
 
   const updateCard = (id: string, updates: AiriCard | Card | ccv3.CharacterCardV3) => {
@@ -98,7 +102,9 @@ export const useAiriCardStore = defineStore('airi-card', () => {
       ...updates,
     }
 
-    cards.value.set(id, newAiriCard(updatedCard))
+    const newCards = new Map(cards.value)
+    newCards.set(id, newAiriCard(updatedCard))
+    cards.value = newCards
     return true
   }
 
@@ -205,16 +211,31 @@ export const useAiriCardStore = defineStore('airi-card', () => {
   }
 
   function initialize() {
-    if (cards.value.has('default'))
-      return
-    cards.value.set('default', newAiriCard({
-      name: 'ReLU',
-      version: '1.0.0',
-      description: SystemPromptV2(
-        t('base.prompt.prefix'),
-        t('base.prompt.suffix'),
-      ).content,
-    }))
+    const SYSTEM_PROMPT_VERSION = '1.1.1' // Increment when system prompt changes
+    const existingCard = cards.value.get('default')
+
+    // Update default card if it doesn't exist or version is outdated
+    if (!existingCard || existingCard.version !== SYSTEM_PROMPT_VERSION) {
+      console.log('[AiriCard] Updating default card to version', SYSTEM_PROMPT_VERSION)
+      const newCard = newAiriCard({
+        name: 'ReLU',
+        version: SYSTEM_PROMPT_VERSION,
+        systemPrompt: '', // Clear old systemPrompt
+        description: SystemPromptV2(
+          t('base.prompt.prefix'),
+          t('base.prompt.suffix'),
+        ).content,
+        personality: '', // Clear old personality
+      })
+      console.log('[AiriCard] New card description length:', newCard.description.length)
+      console.log('[AiriCard] Has web search:', newCard.description.includes('intelligent_web_search'))
+
+      // Trigger reactivity by creating a new Map
+      const newCards = new Map(cards.value)
+      newCards.set('default', newCard)
+      cards.value = newCards
+    }
+
     if (!activeCardId.value)
       activeCardId.value = 'default'
   }

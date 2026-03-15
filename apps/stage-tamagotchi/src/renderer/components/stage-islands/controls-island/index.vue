@@ -89,7 +89,8 @@ const startDraggingWindow = !isLinux() ? defineInvoke(context.value, electronSta
 
 // Expose whether hearing dialog is open so parent can disable click-through
 const hearingDialogOpen = ref(false)
-defineExpose({ hearingDialogOpen })
+// Expose expanded state so parent can disable click-through when menu is open
+defineExpose({ hearingDialogOpen, expanded })
 
 function refreshWindow() {
   window.location.reload()

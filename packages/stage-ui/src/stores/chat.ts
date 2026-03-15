@@ -389,7 +389,7 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
                   createdAt: Date.now(),
                   id: nanoid(),
                   metadata: {
-                    typingCompleted: false, // 标记为未完成，触发打字机效果
+                    typingCompleted: false,
                   },
                 }
 
@@ -587,6 +587,17 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
               }
               break
             case 'finish':
+              // AI 输出完毕，如果只有工具调用没有文本，标记为完成
+              // 这样可以避免加载框一直显示
+              const hasText = buildingMessage.slices.some(s => s.type === 'text' && (s as any).text?.trim())
+              if (!hasText && buildingMessage.slices.length > 0) {
+                // 只有工具调用，没有文本输出，添加一个空文本标记表示已完成
+                buildingMessage.slices.push({
+                  type: 'text',
+                  text: '',
+                })
+                updateUI()
+              }
               break
             case 'error':
               throw event.error ?? new Error('Stream error')

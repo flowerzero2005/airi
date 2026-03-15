@@ -4,7 +4,6 @@ import type { ChatSlices, ChatSlicesText, StreamingAssistantMessage } from '../.
 import { computed, ref, watch } from 'vue'
 
 import ChatResponsePart from './response-part.vue'
-import ChatToolCallBlock from './tool-call-block.vue'
 
 import { useMemoryAdvancedSettingsStore } from '../../../stores/settings/memory-advanced'
 import { MarkdownRenderer } from '../../markdown'
@@ -141,16 +140,30 @@ function startTypingEffect(targetText: string) {
 }
 
 // 用于渲染的 slices，使用打字机效果的文本
+// 过滤掉工具调用和工具结果，只显示文本内容
 const displaySlices = computed<ChatSlices[]>(() => {
-  return resolvedSlices.value.map((slice) => {
-    if (slice.type === 'text') {
-      return { type: 'text', text: displayedText.value } satisfies ChatSlicesText
-    }
-    return slice
-  })
+  return resolvedSlices.value
+    .filter(slice => slice.type === 'text') // 只保留文本类型
+    .map((slice) => {
+      if (slice.type === 'text') {
+        return { type: 'text', text: displayedText.value } satisfies ChatSlicesText
+      }
+      return slice
+    })
 })
 
+// 加载器显示逻辑
+const hasOnlyToolCalls = computed(() => {
+  const slices = resolvedSlices.value
+  // 如果有任何 text slice（即使是空的），就不算"只有工具调用"
+  const hasAnyText = slices.some(s => s.type === 'text')
+  if (hasAnyText) {
+    return false
+  }
+  return slices.length > 0 && slices.every(s => s.type === 'tool-call' || s.type === 'tool-call-result')
+})
 const showLoader = computed(() => props.showPlaceholder && resolvedSlices.value.length === 0)
+const shouldHideMessage = computed(() => hasOnlyToolCalls.value && displaySlices.value.length === 0)
 const containerClass = computed(() => props.variant === 'mobile' ? 'mr-0' : 'mr-12')
 const boxClasses = computed(() => [
   props.variant === 'mobile' ? 'px-2 py-2 text-sm bg-primary-50/90 dark:bg-primary-950/90' : 'px-3 py-3 bg-primary-50/80 dark:bg-primary-950/80',
@@ -158,7 +171,7 @@ const boxClasses = computed(() => [
 </script>
 
 <template>
-  <div flex :class="containerClass" class="ph-no-capture">
+  <div v-if="!shouldHideMessage" flex :class="containerClass" class="ph-no-capture">
     <div
       flex="~ col" shadow="sm primary-200/50 dark:none"
       min-w-20 rounded-xl h="unset <sm:fit"
@@ -167,21 +180,14 @@ const boxClasses = computed(() => [
       <div>
         <span text-sm text="black/60 dark:white/65" font-normal class="inline <sm:hidden">{{ label }}</span>
       </div>
-      <div v-if="displaySlices.length > 0" class="break-words" text="primary-700 dark:primary-100">
+      <div v-if="!showLoader && displaySlices.length > 0" class="break-words" text="primary-700 dark:primary-100">
         <template v-for="(slice, sliceIndex) in displaySlices" :key="sliceIndex">
-          <ChatToolCallBlock
-            v-if="slice.type === 'tool-call'"
-            :tool-name="slice.toolCall.toolName"
-            :args="slice.toolCall.args"
-            class="mb-2"
-          />
-          <template v-else-if="slice.type === 'tool-call-result'" />
-          <template v-else-if="slice.type === 'text'">
+          <template v-if="slice.type === 'text'">
             <MarkdownRenderer :content="slice.text" />
           </template>
         </template>
       </div>
-      <div v-else-if="showLoader" i-eos-icons:three-dots-loading />
+      <div v-if="showLoader" i-eos-icons:three-dots-loading />
 
       <ChatResponsePart
         v-if="message.categorization"

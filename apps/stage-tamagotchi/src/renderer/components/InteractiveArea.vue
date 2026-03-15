@@ -14,6 +14,7 @@ import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { webSearchTools } from '../stores/tools/builtin/web-search'
 import { widgetsTools } from '../stores/tools/builtin/widgets'
 
 const messageInput = ref('')
@@ -45,7 +46,11 @@ let isInitialized = false
 // Get tools array
 async function getTools() {
   const baseTools = await widgetsTools()
-  return memoryTool ? [...baseTools, memoryTool] : baseTools
+  const searchTools = await webSearchTools()
+  const allTools = [...baseTools, ...searchTools]
+  const finalTools = memoryTool ? [...allTools, memoryTool] : allTools
+
+  return finalTools
 }
 
 // Safely initialize memory system
@@ -71,7 +76,8 @@ async function initializeMemorySystem() {
       await notebookStore.loadFromStorage()
     }
 
-    memoryTool = tool
+    // Await the memory tool promise
+    memoryTool = await tool
     memoryManager = useMemoryManager()
     onChatTurnComplete = chatOrchestrator.onChatTurnComplete
 

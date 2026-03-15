@@ -84,15 +84,15 @@ export function autoInsertSegmentMarkers(text: string): string {
   // 6. 检测问句后的新段落
   result = result.replace(/([？?])[\t\v\f\r \xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]*\n\s*([^？?\s])/g, `$1\n\n${SEGMENT_MARKER}$2`)
 
-  // 7. 处理长段落：如果一个段落太长（> 150 字），在合适的位置分段
+  // 7. 处理长段落：如果一个段落太长（> 200 字），在合适的位置分段
   const segments = result.split(SEGMENT_MARKER)
   const processedSegments: string[] = []
 
   for (const segment of segments) {
     const cleanSegment = removeSpecialMarkers(segment)
 
-    // 如果段落长度超过 150 字，尝试在句子结束处分段
-    if (cleanSegment.length > 150) {
+    // 如果段落长度超过 200 字，尝试在句子结束处分段
+    if (cleanSegment.length > 200) {
       // 按句子分割（保留标点）
       const sentences = segment.split(/([。！？.!?]+)/).filter(s => s.trim())
       let currentChunk = ''
@@ -103,8 +103,9 @@ export function autoInsertSegmentMarkers(text: string): string {
         const testChunk = currentChunk + sentence
         const cleanTestChunk = removeSpecialMarkers(testChunk)
 
-        // 如果加上这句话后超过 100 字，且当前块不为空，就分段
-        if (cleanTestChunk.length > 100 && currentChunk.trim()) {
+        // 如果加上这句话后超过 150 字，且当前块不为空，就分段
+        // 重要：只在完整句子结束后分段（必须是标点符号）
+        if (cleanTestChunk.length > 150 && currentChunk.trim() && /[。！？.!?]+$/.test(sentence)) {
           chunks.push(currentChunk.trim())
           currentChunk = sentence
         }

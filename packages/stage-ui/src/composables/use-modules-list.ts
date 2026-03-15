@@ -13,6 +13,7 @@ import { useMinecraftStore } from '../stores/modules/gaming-minecraft'
 import { useHearingStore } from '../stores/modules/hearing'
 import { useSpeechStore } from '../stores/modules/speech'
 import { useTwitterStore } from '../stores/modules/twitter'
+import { useWebSearchStore } from '../stores/modules/web-search'
 
 export interface Module {
   id: string
@@ -37,6 +38,7 @@ export function useModulesList() {
   const twitterStore = useTwitterStore()
   const minecraftStore = useMinecraftStore()
   const factorioStore = useFactorioStore()
+  const webSearchStore = useWebSearchStore()
   const beatSyncState = ref<BeatSyncDetectorState>()
 
   const modulesList = computed<Module[]>(() => [
@@ -101,6 +103,15 @@ export function useModulesList() {
       icon: 'i-solar:book-bookmark-bold-duotone',
       to: '/settings/modules/memory-long-term',
       configured: true,
+      category: 'essential',
+    },
+    {
+      id: 'web-search',
+      name: '智能联网',
+      description: '配置智能联网系统和人设过滤',
+      icon: 'i-solar:global-bold-duotone',
+      to: '/settings/modules/web-search',
+      configured: webSearchStore.configured,
       category: 'essential',
     },
     {

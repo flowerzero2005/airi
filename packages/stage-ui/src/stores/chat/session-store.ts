@@ -35,6 +35,27 @@ export const useChatSessionStore = defineStore('chat-session', () => {
   const codeBlockSystemPrompt = '- For any programming code block, always specify the programming language that supported on @shikijs/rehype on the rendered markdown, eg. ```python ... ```\n'
   const mathSyntaxSystemPrompt = '- For any math equation, use LaTeX format, eg: $ x^3 $, always escape dollar sign outside math equation\n'
 
+  // Watch systemPrompt changes and update all loaded sessions
+  watch(systemPrompt, (newPrompt) => {
+    if (!newPrompt)
+      return
+
+    const currentSystemPrompt = codeBlockSystemPrompt + mathSyntaxSystemPrompt + newPrompt
+
+    // Update all loaded sessions
+    for (const [sessionId, messages] of Object.entries(sessionMessages.value)) {
+      if (messages.length > 0 && messages[0]?.role === 'system') {
+        if (messages[0].content !== currentSystemPrompt) {
+          messages[0] = {
+            ...messages[0],
+            content: currentSystemPrompt,
+          }
+          void persistSession(sessionId)
+        }
+      }
+    }
+  })
+
   function getCurrentUserId() {
     return userId.value || 'local'
   }
@@ -258,6 +279,7 @@ export const useChatSessionStore = defineStore('chat-session', () => {
 
     const loadPromise = (async () => {
       const stored = await chatSessionsRepo.getSession(sessionId)
+
       if (stored) {
         sessionMetas.value[sessionId] = stored.meta
         sessionMessages.value[sessionId] = stored.messages
@@ -358,9 +380,26 @@ export const useChatSessionStore = defineStore('chat-session', () => {
 
   function ensureSession(sessionId: string) {
     ensureGeneration(sessionId)
-    if (!sessionMessages.value[sessionId] || sessionMessages.value[sessionId].length === 0) {
+    const messages = sessionMessages.value[sessionId]
+
+    if (!messages || messages.length === 0) {
+      // 会话为空，生成新的初始消息
       sessionMessages.value[sessionId] = [generateInitialMessage()]
       void persistSession(sessionId)
+    }
+    else {
+      // 会话存在，检查系统消息是否需要更新
+      const firstMessage = messages[0]
+      const currentSystemPrompt = codeBlockSystemPrompt + mathSyntaxSystemPrompt + systemPrompt.value
+
+      if (firstMessage?.role === 'system' && firstMessage.content !== currentSystemPrompt) {
+        // 系统提示词已变化，更新第一条消息
+        messages[0] = {
+          ...firstMessage,
+          content: currentSystemPrompt,
+        }
+        void persistSession(sessionId)
+      }
     }
   }
 

@@ -118,10 +118,17 @@ async function streamFrom(model: string, chatProvider: ChatProvider, messages: M
   })
 }
 
-export async function attemptForToolsCompatibilityDiscovery(model: string, chatProvider: ChatProvider, _: Message[], options?: Omit<StreamOptions, 'supportsTools'>): Promise<boolean> {
+export async function attemptForToolsCompatibilityDiscovery(model: string, chatProvider: ChatProvider, tools: any[], options?: Omit<StreamOptions, 'supportsTools'>): Promise<boolean> {
   async function attempt(enable: boolean) {
     try {
-      await streamFrom(model, chatProvider, [{ role: 'user', content: 'Hello, world!' }], { ...options, supportsTools: enable })
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout after 10s')), 10000)
+      })
+
+      const streamPromise = streamFrom(model, chatProvider, [{ role: 'user', content: 'Hello, world!' }], { ...options, supportsTools: enable, tools: enable ? tools : undefined })
+
+      await Promise.race([streamPromise, timeoutPromise])
       return true
     }
     catch (err) {
@@ -179,26 +186,29 @@ export async function attemptForToolsCompatibilityDiscovery(model: string, chatP
   ]
 
   const attemptsResults = await promiseAllWithInterval<boolean | undefined>(attempts, 1000)
+
   if (attemptsResults.some(res => res.error)) {
     const err = new Error(`Error during tools compatibility discovery for model: ${model}. Errors: ${attemptsResults.map(res => res.error).filter(Boolean).join(', ')}`)
     err.cause = attemptsResults.map(res => res.error).filter(Boolean)
     throw err
   }
 
-  return attemptsResults[0].result === true && attemptsResults[1].result === true
+  const result = attemptsResults[0].result === true && attemptsResults[1].result === true
+  return result
 }
 
 export const useLLM = defineStore('llm', () => {
   const toolsCompatibility = ref<Map<string, boolean>>(new Map())
 
-  async function discoverToolsCompatibility(model: string, chatProvider: ChatProvider, _: Message[], options?: Omit<StreamOptions, 'supportsTools'>) {
+  async function discoverToolsCompatibility(model: string, chatProvider: ChatProvider, tools: any[], options?: Omit<StreamOptions, 'supportsTools'>) {
     // Cached, no need to discover again
-    if (toolsCompatibility.value.has(`${chatProvider.chat(model).baseURL}-${model}`)) {
+    const cacheKey = `${chatProvider.chat(model).baseURL}-${model}`
+    if (toolsCompatibility.value.has(cacheKey)) {
       return
     }
 
-    const res = await attemptForToolsCompatibilityDiscovery(model, chatProvider, _, { ...options, toolsCompatibility: toolsCompatibility.value })
-    toolsCompatibility.value.set(`${chatProvider.chat(model).baseURL}-${model}`, res)
+    const res = await attemptForToolsCompatibilityDiscovery(model, chatProvider, tools, { ...options, toolsCompatibility: toolsCompatibility.value })
+    toolsCompatibility.value.set(cacheKey, res)
   }
 
   function stream(model: string, chatProvider: ChatProvider, messages: Message[], options?: StreamOptions) {
