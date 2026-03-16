@@ -46,7 +46,44 @@ watch(() => props.sending, scrollToBottom, { flush: 'post' })
 onMounted(scrollToBottom)
 
 const streaming = computed<StreamingAssistantMessage>(() => props.streamingMessage ?? { role: 'assistant', content: '', slices: [], tool_results: [], createdAt: Date.now() })
-const showStreamingPlaceholder = computed(() => (streaming.value.slices?.length ?? 0) === 0 && !streaming.value.content)
+
+// 修复：不仅在没有 slice 时显示 placeholder，也要在有未完成工具调用时显示
+const showStreamingPlaceholder = computed(() => {
+  const slices = streaming.value.slices ?? []
+  const content = streaming.value.content
+
+  // 情况1：没有任何 slice 且没有 content
+  if (slices.length === 0 && !content) {
+    return true
+  }
+
+  // 情况2：检查是否有未完成的工具调用
+  const toolCallIds = new Set<string>()
+  const toolResultIds = new Set<string>()
+
+  slices.forEach((slice) => {
+    if (slice.type === 'tool-call') {
+      // CompletionToolCall 应该有 id 属性，但类型定义可能不完整
+      const toolCallId = (slice.toolCall as any).id || (slice.toolCall as any).toolCallId
+      if (toolCallId) {
+        toolCallIds.add(toolCallId)
+      }
+    }
+    else if (slice.type === 'tool-call-result') {
+      toolResultIds.add(slice.id)
+    }
+  })
+
+  // 如果有 tool-call 但没有对应的 result，说明工具正在执行，应该显示 placeholder
+  for (const id of toolCallIds) {
+    if (!toolResultIds.has(id)) {
+      return true
+    }
+  }
+
+  return false
+})
+
 const streamingTs = computed(() => streaming.value?.createdAt)
 function shouldShowPlaceholder(message: ChatHistoryItem) {
   const ts = streamingTs.value

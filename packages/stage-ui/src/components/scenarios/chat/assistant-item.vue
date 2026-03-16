@@ -47,7 +47,13 @@ const messageCompleted = ref(false) // 标记消息是否已完成显示
 const typingSpeed = computed(() => memoryAdvancedSettings.settings.typingSpeed || 30)
 
 // 检查消息是否是历史消息（创建时间超过5秒）
+// 但如果正在显示 placeholder（流式输出中），则不视为历史消息
 const isHistoricalMessage = computed(() => {
+  // 如果正在显示 placeholder，说明是流式输出中，不是历史消息
+  if (props.showPlaceholder) {
+    return false
+  }
+
   const createdAt = props.message.createdAt
   if (!createdAt)
     return true // 没有创建时间的消息视为历史消息
@@ -166,7 +172,7 @@ const hasOnlyToolCalls = computed(() => {
 
 // 修复：只在流式输出时显示加载器，历史消息不显示
 const showLoader = computed(() => {
-  // 如果是历史消息（超过5秒），不显示加载器
+  // 如果是历史消息（超过5秒且不在流式输出中），不显示加载器
   if (isHistoricalMessage.value) {
     return false
   }
