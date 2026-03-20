@@ -666,6 +666,7 @@ export const useChatOrchestratorStore = defineStore('chat-orchestrator', () => {
     // 只有当前活动会话才需要立即显示
     if (sessionId === activeSessionId.value) {
       chatSession.messages.push(userMessage)
+      await chatSession.persistSessionMessages(sessionId)
     }
     else {
       const sessionMessages = chatSession.getSessionMessages(sessionId)

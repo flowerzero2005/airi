@@ -30,10 +30,16 @@ export interface DigestedInformation {
   detailsHint?: string
 }
 
+export interface SearchBehaviorConfig {
+  pretendUncertainty: boolean
+  knowledgeTransparency: number // 0-1
+}
+
 export function digestSearchResults(
   filteredResults: FilteredResult[],
   characterProfile: CharacterProfile,
   intentAnalysis: IntentAnalysis,
+  behaviorConfig?: SearchBehaviorConfig,
 ): DigestedInformation {
   if (filteredResults.length === 0) {
     return {
@@ -52,10 +58,10 @@ export function digestSearchResults(
     }
   }
 
-  const mainFindings = summarizeInCharacterVoice(filteredResults, characterProfile)
+  const mainFindings = summarizeInCharacterVoice(filteredResults, characterProfile, behaviorConfig)
   const interestingBits = extractInterestingBits(filteredResults, characterProfile)
   const characterOpinion = generateCharacterOpinion(filteredResults, characterProfile, intentAnalysis)
-  const expressionSuggestions = generateExpressionSuggestions(characterProfile, intentAnalysis, filteredResults)
+  const expressionSuggestions = generateExpressionSuggestions(characterProfile, intentAnalysis, filteredResults, behaviorConfig)
 
   return {
     mainFindings,
@@ -70,6 +76,7 @@ export function digestSearchResults(
 function summarizeInCharacterVoice(
   results: FilteredResult[],
   profile: CharacterProfile,
+  behaviorConfig?: SearchBehaviorConfig,
 ): MainFinding[] {
   const findings: MainFinding[] = []
 
@@ -80,15 +87,57 @@ function summarizeInCharacterVoice(
     const keyPoint = extractKeyPoint(result)
     let point = ''
 
+    // 应用表达风格
+    const style = profile.expressionStyle
+
     if (excitement > 0.8) {
       const adj = getExcitedAdjective()
-      point = `诶诶诶！${keyPoint}${adj}的！`
+      // 根据 cute 和 playful 调整语气
+      if (style.cute > 0.7) {
+        point = `诶诶诶！${keyPoint}${adj}的～！`
+      }
+      else if (style.playful > 0.6) {
+        point = `哇！${keyPoint}${adj}诶！`
+      }
+      else {
+        point = `${keyPoint}${adj}的！`
+      }
     }
     else if (excitement > 0.5) {
-      point = `${keyPoint}～感觉挺有意思的`
+      if (style.cute > 0.7) {
+        point = `${keyPoint}～感觉挺有意思的呢`
+      }
+      else if (style.casual > 0.7) {
+        point = `${keyPoint}，感觉还不错`
+      }
+      else if (style.serious > 0.6) {
+        point = `${keyPoint}，这个值得关注`
+      }
+      else {
+        point = `${keyPoint}～感觉挺有意思的`
+      }
     }
     else {
-      point = `嗯...${keyPoint}`
+      // 低兴奋度 - 根据 professional 和 serious 调整
+      if (style.professional > 0.6) {
+        point = `关于${keyPoint}的信息`
+      }
+      else if (style.serious > 0.6) {
+        point = `${keyPoint}，需要了解一下`
+      }
+      else {
+        point = `嗯...${keyPoint}`
+      }
+    }
+
+    // 应用"装不太懂"效果
+    if (behaviorConfig?.pretendUncertainty) {
+      point = applyUncertaintyTone(point, excitement)
+    }
+
+    // 应用知识来源透明度
+    if (behaviorConfig?.knowledgeTransparency) {
+      point = applySourceTransparency(point, behaviorConfig.knowledgeTransparency)
     }
 
     findings.push({
@@ -174,6 +223,7 @@ function generateExpressionSuggestions(
   profile: CharacterProfile,
   intent: IntentAnalysis,
   results: FilteredResult[],
+  behaviorConfig?: SearchBehaviorConfig,
 ): ExpressionSuggestions {
   const topics = results.flatMap(r => r.topics || [])
   const avgExcitement = results.reduce((sum, r) => sum + calculateExcitement(r.topics || [], profile), 0) / results.length
@@ -197,14 +247,59 @@ function generateExpressionSuggestions(
     style.push('可以说"不太懂"')
   }
 
+  // 完整的表达风格支持
   if (profile.expressionStyle.cute > 0.7) {
     style.push('可以用"～"结尾')
     style.push('保持可爱的语气')
+    style.push('使用"诶"、"呀"等语气词')
   }
 
   if (profile.expressionStyle.playful > 0.7) {
     style.push('可以开玩笑')
     style.push('保持轻松玩味')
+    style.push('可以调侃一下')
+  }
+
+  if (profile.expressionStyle.serious > 0.6) {
+    style.push('减少过多语气词')
+    style.push('保持相对正式的表达')
+    avoid.push('不要太随意')
+  }
+
+  if (profile.expressionStyle.casual > 0.7) {
+    style.push('口语化表达')
+    style.push('不用太拘谨')
+  }
+
+  if (profile.expressionStyle.professional > 0.6) {
+    style.push('术语使用要准确')
+    style.push('逻辑清晰')
+    avoid.push('不要太口语化')
+  }
+
+  if (profile.expressionStyle.emotional > 0.7) {
+    style.push('可以表达感受')
+    style.push('展现情感共鸣')
+    style.push('关注情绪层面')
+  }
+
+  // 装不太懂的建议
+  if (behaviorConfig?.pretendUncertainty) {
+    style.push('使用试探性语气（好像、听说、应该）')
+    style.push('保持谦虚态度')
+    style.push('可以说"不太确定"')
+  }
+
+  // 知识来源透明度建议
+  if (behaviorConfig?.knowledgeTransparency) {
+    if (behaviorConfig.knowledgeTransparency > 0.7) {
+      style.push('可以提及"我查了一下"')
+      style.push('适当说明信息来源')
+    }
+    else if (behaviorConfig.knowledgeTransparency < 0.3) {
+      avoid.push('不要提及搜索行为')
+      style.push('像自己知道的一样表达')
+    }
   }
 
   avoid.push('不要列举太多细节')
@@ -305,4 +400,50 @@ function extractMemeRelated(snippet: string): string | null {
 function getExcitedAdjective(): string {
   const adjectives = ['超棒', '超有意思', '超酷', '超好玩', '超赞']
   return adjectives[Math.floor(Math.random() * adjectives.length)]
+}
+
+// 应用不确定性语气
+function applyUncertaintyTone(text: string, excitement: number): string {
+  // 高兴奋度时也要装不太懂
+  if (excitement > 0.7) {
+    const prefixes = ['好像', '听说', '感觉']
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+    return text.replace(/^(诶诶诶！|哇！)/, `$1${prefix}`)
+  }
+
+  // 中等兴奋度
+  if (excitement > 0.4) {
+    const prefixes = ['好像', '应该是', '听说']
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+    // 在句子开头或关键词前添加不确定性
+    if (text.includes('～')) {
+      return text.replace('～', `～${prefix}`)
+    }
+    return `${prefix}${text}`
+  }
+
+  // 低兴奋度 - 更加不确定
+  const prefixes = ['不太确定，但好像', '我记得好像', '应该是']
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+  return text.replace(/^嗯\.\.\./, `嗯...${prefix}`)
+}
+
+// 应用知识来源透明度
+function applySourceTransparency(text: string, transparency: number): string {
+  // 高透明度 (0.7-1.0) - 明确说明查询了
+  if (transparency > 0.7) {
+    const prefixes = ['我刚查了一下，', '查到的信息是，', '搜了一下发现，']
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+    return `${prefix}${text}`
+  }
+
+  // 中等透明度 (0.4-0.6) - 偶尔提及
+  if (transparency > 0.4 && Math.random() > 0.5) {
+    const prefixes = ['我看了看，', '了解了一下，']
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+    return `${prefix}${text}`
+  }
+
+  // 低透明度 (0-0.3) - 完全隐藏，像自己知道的
+  return text
 }

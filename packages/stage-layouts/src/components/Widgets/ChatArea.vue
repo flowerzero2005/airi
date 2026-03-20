@@ -10,6 +10,7 @@ import { useConsciousnessStore } from '@proj-airi/stage-ui/stores/modules/consci
 import { useHearingSpeechInputPipeline, useHearingStore } from '@proj-airi/stage-ui/stores/modules/hearing'
 import { useProvidersStore } from '@proj-airi/stage-ui/stores/providers'
 import { useSettings, useSettingsAudioDevice } from '@proj-airi/stage-ui/stores/settings'
+import { intelligentWebSearch } from '@proj-airi/stage-ui/tools/web-search'
 import { BasicTextarea, FieldSelect } from '@proj-airi/ui'
 import { until } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
@@ -36,6 +37,12 @@ const { ingest, onAfterMessageComposed, discoverToolsCompatibility } = chatOrche
 const { messages } = storeToRefs(chatSession)
 const { audioContext } = useAudioContext()
 const { t } = useI18n()
+
+async function getTools() {
+  return Promise.all([
+    intelligentWebSearch,
+  ])
+}
 
 // Transcription pipeline
 const hearingStore = useHearingStore()
@@ -84,10 +91,12 @@ async function debouncedAutoSend(text: string) {
     if (textToSend && autoSendEnabled.value) {
       try {
         const providerConfig = providersStore.getProviderConfig(activeProvider.value)
+        const tools = await getTools()
         await ingest(textToSend, {
           chatProvider: await providersStore.getProviderInstance(activeProvider.value) as ChatProvider,
           model: activeModel.value,
           providerConfig,
+          tools,
         })
         // Clear the message input after sending
         messageInput.value = ''
@@ -112,10 +121,12 @@ async function handleSend() {
   try {
     const providerConfig = providersStore.getProviderConfig(activeProvider.value)
 
+    const tools = await getTools()
     await ingest(textToSend, {
       chatProvider: await providersStore.getProviderInstance(activeProvider.value) as ChatProvider,
       model: activeModel.value,
       providerConfig,
+      tools,
     })
   }
   catch (error) {
@@ -136,7 +147,8 @@ watch(hearingTooltipOpen, async (value) => {
 
 watch([activeProvider, activeModel], async () => {
   if (activeProvider.value && activeModel.value) {
-    await discoverToolsCompatibility(activeModel.value, await providersStore.getProviderInstance<ChatProvider>(activeProvider.value), [])
+    const tools = await getTools()
+    await discoverToolsCompatibility(activeModel.value, await providersStore.getProviderInstance<ChatProvider>(activeProvider.value), tools)
   }
 })
 
@@ -341,10 +353,12 @@ async function stopListening() {
       pendingAutoSendText.value = ''
       try {
         const providerConfig = providersStore.getProviderConfig(activeProvider.value)
+        const tools = await getTools()
         await ingest(textToSend, {
           chatProvider: await providersStore.getProviderInstance(activeProvider.value) as ChatProvider,
           model: activeModel.value,
           providerConfig,
+          tools,
         })
         messageInput.value = ''
       }

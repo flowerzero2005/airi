@@ -59,7 +59,7 @@ export interface AiriCard extends Card {
 export const useAiriCardStore = defineStore('airi-card', () => {
   const { t } = useI18n()
 
-  const SYSTEM_PROMPT_VERSION = '1.2.0' // Increment when system prompt changes - Updated 2026-03-16: Multi-point reinforcement
+  const SYSTEM_PROMPT_VERSION = '1.2.1' // Increment when system prompt changes - Updated 2026-03-20: De-templating & companion rules
 
   const cards = useLocalStorageManualReset<Map<string, AiriCard>>('airi-cards', new Map())
   const activeCardId = useLocalStorageManualReset<string>('airi-card-active-id', 'default')

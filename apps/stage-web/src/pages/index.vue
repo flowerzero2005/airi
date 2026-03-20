@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { ChatProvider } from '@xsai-ext/providers/utils'
 
 import Header from '@proj-airi/stage-layouts/components/Layouts/Header.vue'

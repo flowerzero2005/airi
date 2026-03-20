@@ -12,6 +12,7 @@ import { useChatStreamStore } from '@proj-airi/stage-ui/stores/chat/stream-store
 import { useConsciousnessStore } from '@proj-airi/stage-ui/stores/modules/consciousness'
 import { useProvidersStore } from '@proj-airi/stage-ui/stores/providers'
 import { useSettings, useSettingsAudioDevice } from '@proj-airi/stage-ui/stores/settings'
+import { intelligentWebSearch } from '@proj-airi/stage-ui/tools/web-search'
 import { BasicTextarea, useTheme } from '@proj-airi/ui'
 import { useResizeObserver, useScreenSafeArea } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
@@ -36,6 +37,12 @@ const { messages } = storeToRefs(chatSession)
 const { streamingMessage } = storeToRefs(chatStream)
 const { sending } = storeToRefs(chatOrchestrator)
 const historyMessages = computed(() => messages.value as unknown as ChatHistoryItem[])
+
+async function getTools() {
+  return Promise.all([
+    intelligentWebSearch,
+  ])
+}
 
 const viewControlsActiveMode = ref<'x' | 'y' | 'z' | 'scale'>('scale')
 const viewControlsInputsRef = useTemplateRef<InstanceType<typeof ViewControlInputs>>('viewControlsInputs')
@@ -79,10 +86,12 @@ async function handleSend() {
   try {
     const providerConfig = providersStore.getProviderConfig(activeProvider.value)
 
+    const tools = await getTools()
     await ingest(textToSend, {
       chatProvider: await providersStore.getProviderInstance(activeProvider.value) as ChatProvider,
       model: activeModel.value,
       providerConfig,
+      tools,
     })
   }
   catch (error) {

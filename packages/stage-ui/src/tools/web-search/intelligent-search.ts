@@ -143,6 +143,32 @@ export const intelligentWebSearch = tool({
           conversationContext,
         })
 
+        // 应用保守程度 - 决定是否真的需要搜索
+        const conservativeness = webSearchStore.conservativeness
+        const shouldSearch = shouldPerformSearch(intentResult as any, conservativeness, userMessage)
+
+        if (!shouldSearch) {
+          return {
+            success: false,
+            shouldSearch: false,
+            reason: 'Based on conservativeness setting, search is not needed for this query',
+            digested: {
+              mainFindings: [],
+              interestingBits: [],
+              characterOpinion: {
+                overall: 'casual',
+                comment: '这个我可以直接回答～',
+              },
+              expressionSuggestions: {
+                tone: 'casual',
+                style: ['保持轻松自然'],
+                avoid: ['不需要提及搜索'],
+              },
+              moreDetailsAvailable: false,
+            },
+          }
+        }
+
         // Step 2: Build query
         const queryResult = await queryBuilder.execute({
           intentAnalysis: intentResult as any,
@@ -200,6 +226,10 @@ export const intelligentWebSearch = tool({
           filteredResults,
           webSearchStore.characterProfile as any,
           intentResult as any,
+          {
+            pretendUncertainty: webSearchStore.pretendUncertainty,
+            knowledgeTransparency: webSearchStore.knowledgeTransparency,
+          },
         )
 
         return {
@@ -232,3 +262,36 @@ export const intelligentWebSearch = tool({
     }
   },
 })
+
+// 根据保守程度决定是否需要搜索
+function shouldPerformSearch(
+  intentAnalysis: any,
+  conservativeness: number,
+  userMessage: string,
+): boolean {
+  const lowerMessage = userMessage.toLowerCase()
+
+  // 用户明确要求搜索 - 无论保守程度如何都要搜索
+  if (/(搜索|查|找|search|look up|google|百度)/i.test(lowerMessage)) {
+    return true
+  }
+
+  // 获取信息需求等级
+  const infoNeedLevel = intentAnalysis.informationNeedLevel || 0.5
+
+  // 保守程度 0.0-0.3: 积极搜索
+  if (conservativeness < 0.3) {
+    // 只要有一点信息需求就搜索
+    return infoNeedLevel > 0.3
+  }
+
+  // 保守程度 0.4-0.6: 适度保守
+  if (conservativeness < 0.7) {
+    // 中等以上信息需求才搜索
+    return infoNeedLevel > 0.5
+  }
+
+  // 保守程度 0.7-1.0: 非常保守
+  // 只在高信息需求或明确请求时搜索
+  return infoNeedLevel > 0.7
+}

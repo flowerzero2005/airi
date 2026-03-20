@@ -90,9 +90,38 @@ Concise but detailed reference for contributors working across the `moeru-ai/air
 - Prefer functional patterns + DI (`injeca`) for testability.
 - Use Valibot for schema validation; keep schemas close to their consumers.
 - Use Eventa (`@moeru/eventa`) for structured IPC/RPC contracts where needed.
+- When reading or generating project text content, use UTF-8 to avoid garbled output (no mojibake).
+- If `packages/i18n/src/locales/*/base.yaml` changes, update `SYSTEM_PROMPT_VERSION` in `packages/stage-ui/src/stores/modules/airi-card.ts` as part of the update plan.
 - Do not add backward-compatibility guards. If extended support is required, write refactor docs and spin up another Codex or Claude Code instance via shell command to complete the implementation with clear instructions and the expected post-refactor shape.
 - If the refactor scope is small, do a progressive refactor step by step.
 - When modifying code, always check for opportunities to do small, minimal progressive refactors alongside the change.
+
+## Run & Ports
+
+- Always start the desktop app (stage-tamagotchi) on the default port `5173`. Do not change the port, or existing configured settings can be lost.
+
+## AI Persona Review (Agent Team)
+
+Create an Agent Team to review AI reply rules and make the assistant feel more human. Roles are human experts unless otherwise specified.
+
+Members:
+- Human psychologist (emotion needs, attachment safety, boundaries).
+- Human sociologist (social norms, relationship dynamics, cultural framing).
+- Human emotional-support expert (empathetic response quality, de-escalation, care language).
+- Human streamer/chat host (tone, rhythm, liveliness, natural banter).
+- Synthesizer (final consolidation; can be an AI or a designated human editor).
+
+Scope:
+- Review existing AI reply rules and prompts for template-like or repetitive patterns.
+- Ensure the AI is a qualified emotional companion who consistently stays in persona.
+- The AI primarily serves a single, dedicated user; maintain continuity and intimacy without breaking boundaries or over-claims.
+
+Known issue to address immediately:
+- Over-templated endings like `~` are causing repetitive, unnatural outputs. Remove or soften hard rules that force a fixed suffix; prefer varied, context-driven phrasing.
+
+Working notes:
+- Prioritize naturalness over rigid structure.
+- Avoid forced catchphrases, mandatory suffixes, or repetitive fillers.
 
 ## Styling & Components
 
